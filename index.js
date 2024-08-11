@@ -12,7 +12,10 @@ import authRoute from './routes/auth.js'
 dotenv.config()
 const app = express()
 const port = process.env.PORT || 8000
-
+const corsOption = {
+    origin: true, // Cho phép mọi miền truy cập.
+    credentials: true // Cho phép gửi thông tin xác thực (cookie, HTTP Authentication) cùng với yêu cầu CORS.
+}
 //database connection
 mongoose.set('strictQuery', false)
 const connection = async() => {
@@ -28,12 +31,12 @@ const connection = async() => {
 }
 // middleware
 app.use(express.json()) // nếu một yêu cầu POST hoặc PUT gửi dữ liệu JSON, express.json() sẽ phân tích dữ liệu đó và đưa vào req.body để bạn có thể dễ dàng truy cập nó.
-app.use(cors()) //Quản lý các yêu cầu từ nguồn gốc khác (CORS).
+app.use(cors(corsOption)) //Quản lý các yêu cầu từ nguồn gốc khác (CORS).
 app.use(cookieParser()) // Phân tích cookie và đưa chúng vào req.cookies
 
-app.use('/auth', authRoute)
-app.use('/tours', tourRoute)
-app.use('/users', userRoute)
+app.use('/api/v1/auth', authRoute)
+app.use('/api/v1/tours', tourRoute)
+app.use('/api/v1/users', userRoute)
 
 app.listen(port, () => {
     connection();
