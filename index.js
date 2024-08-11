@@ -4,6 +4,10 @@ import mongoose, { connect } from 'mongoose'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import tourRoute from './routes/tours.js'
+import userRoute from './routes/users.js'
+import authRoute from './routes/auth.js'
+
+
 // Nạp các biến từ file .env vào process.env 
 dotenv.config()
 const app = express()
@@ -26,7 +30,10 @@ const connection = async() => {
 app.use(express.json()) // nếu một yêu cầu POST hoặc PUT gửi dữ liệu JSON, express.json() sẽ phân tích dữ liệu đó và đưa vào req.body để bạn có thể dễ dàng truy cập nó.
 app.use(cors()) //Quản lý các yêu cầu từ nguồn gốc khác (CORS).
 app.use(cookieParser()) // Phân tích cookie và đưa chúng vào req.cookies
+
+app.use('/auth', authRoute)
 app.use('/tours', tourRoute)
+app.use('/users', userRoute)
 
 app.listen(port, () => {
     connection();
