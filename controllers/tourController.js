@@ -50,7 +50,7 @@ export const deleteTour = async (req, res) => {
     }
 }
 
-// getSingle tour
+// get single tour
 export const getSingleTour = async (req, res) => {
     const id = req.params.id
     try {
@@ -61,12 +61,58 @@ export const getSingleTour = async (req, res) => {
     }
 }
 
-// getAll tour
+// get all tour
 export const getAllTour = async (req, res) => {
+    // pagination
+    // Lấy số trang từ yêu cầu truy vấn trong HTTP
+    const page = parseInt(req.query.page)
     try {
-        const allTour = await Tour.find({})
-        res.status(200).json({success:true, message: "Successfully", data: allTour})
+        // .skip() là một phương thức của MongoDB để bỏ qua một số lượng tài liệu nhất định.
+        // page * 8 tính toán số tài liệu cần bỏ qua. Ví dụ, nếu page là 1 (tức là trang thứ hai), nó bỏ qua 1 * 8 = 8 tài liệu
+        // limit() được sử dụng để giới hạn số tài liệu trả về bởi truy vấn
+        const allTour = await Tour.find({}).skip(page*8).limit(8)
+        res.status(200).json({success:true, count: allTour.length, message: "Successfully", data: allTour})
     } catch(err) {
+        res.status(500).json({success:false, message:'Not Found'})
+    }
+}
+
+// get tour by search
+export const getTourBySearch = async (req, res) => {
+    // Tham số city từ yêu cầu HTTP chuyển thành biểu thức chính quy RegExp với cờ 'i' để không phân biệt chữ hoa chữ thường
+    const city = new RegExp(req.query.city, 'i');
+    const distance = parseInt(req.query.distance)
+    const maxGroupSize = parseInt(req.query.maxGroupSize)
+
+    try {
+        // $gte greater than or equal to
+        const tours = await Tour.find({
+            city, 
+            distance: { $gte: distance }, // 
+            maxGroupSize: { $gte: maxGroupSize }
+        });
+        res.status(200).json({success:true, message: "Successfully", data: tours})
+    } catch (err) {
+        res.status(500).json({success:false, message:'Not Found'})
+    }
+} 
+
+// get featured tour
+export const getFeaturedTour = async (req, res) => {
+    try {
+        const tours = await Tour.find({ featured: true }).limit(8)
+        res.status(200).json({success:true, message: "Successfully", data: tours })
+    } catch(err) {
+        res.status(500).json({success:false, message:'Not Found'})
+    }
+}
+
+// get tour counts 
+export const getTourCount = async(req, res) => {
+    try{
+        const tourCount = await Tour.estimatedDocumentCount();
+        res.status(200).json({success:true, message: "Successfully", data: tourCount })
+    } catch (err) {
         res.status(500).json({success:false, message:'Not Found'})
     }
 }
