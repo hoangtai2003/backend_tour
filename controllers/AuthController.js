@@ -54,7 +54,7 @@ export const login = async (req, res) => {
         res.cookie('accessToken', token, {
             httpOnly: true, // httpOnly, nghĩa là nó chỉ có thể được truy cập bởi server-side scripts, không thể truy cập bằng JavaScript từ phía client
             expires: token.expiresIn
-        }).status(200).json({success: true, message: 'successfully login', data: {... rest}})
+        }).status(200).json({success: true, message: 'successfully login', token, role,  data: {... rest}})
     } catch (error) {
         return res.status(500).json({success:false, message:'Failed to login'})
     }
