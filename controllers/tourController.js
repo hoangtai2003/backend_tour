@@ -54,7 +54,7 @@ export const deleteTour = async (req, res) => {
 export const getSingleTour = async (req, res) => {
     const id = req.params.id
     try {
-        const tour = await Tour.findById(id)
+        const tour = await Tour.findById(id).populate('reviews')
         res.status(200).json({success:true, message: "Successfully", data: tour})
     } catch(err) {
         res.status(500).json({success:false, message:'Not Found'})
@@ -70,7 +70,7 @@ export const getAllTour = async (req, res) => {
         // .skip() là một phương thức của MongoDB để bỏ qua một số lượng tài liệu nhất định.
         // page * 8 tính toán số tài liệu cần bỏ qua. Ví dụ, nếu page là 1 (tức là trang thứ hai), nó bỏ qua 1 * 8 = 8 tài liệu
         // limit() được sử dụng để giới hạn số tài liệu trả về bởi truy vấn
-        const allTour = await Tour.find({}).skip(page*8).limit(8)
+        const allTour = await Tour.find({}).skip(page*8).limit(8).populate('reviews')
         res.status(200).json({success:true, count: allTour.length, message: "Successfully", data: allTour})
     } catch(err) {
         res.status(500).json({success:false, message:'Not Found'})
@@ -90,7 +90,7 @@ export const getTourBySearch = async (req, res) => {
             city, 
             distance: { $gte: distance }, // 
             maxGroupSize: { $gte: maxGroupSize }
-        });
+        }).populate('reviews');
         res.status(200).json({success:true, message: "Successfully", data: tours})
     } catch (err) {
         res.status(500).json({success:false, message:'Not Found'})
@@ -100,7 +100,7 @@ export const getTourBySearch = async (req, res) => {
 // get featured tour
 export const getFeaturedTour = async (req, res) => {
     try {
-        const tours = await Tour.find({ featured: true }).limit(8)
+        const tours = await Tour.find({ featured: true }).limit(8).populate('reviews')
         res.status(200).json({success:true, message: "Successfully", data: tours })
     } catch(err) {
         res.status(500).json({success:false, message:'Not Found'})
