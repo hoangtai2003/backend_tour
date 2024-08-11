@@ -7,6 +7,7 @@ import tourRoute from './routes/tours.js'
 import userRoute from './routes/users.js'
 import authRoute from './routes/auth.js'
 import reviewRoute from './routes/reviews.js'
+import bookingRoute from './routes/booking.js'
 
 // Nạp các biến từ file .env vào process.env 
 dotenv.config()
@@ -38,6 +39,9 @@ app.use('/api/v1/auth', authRoute)
 app.use('/api/v1/tours', tourRoute)
 app.use('/api/v1/users', userRoute)
 app.use('/api/v1/review', reviewRoute)
+app.use('/api/v1/booking', bookingRoute)
+
+
 app.listen(port, () => {
     connection();
     console.log(`Server running on port ${port}`);
