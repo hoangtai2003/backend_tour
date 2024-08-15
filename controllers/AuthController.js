@@ -7,7 +7,7 @@ export const register = async (req, res) => {
         const salt = bcrypt.genSaltSync(10)
         const hash = bcrypt.hashSync(req.body.password, salt)
         
-        const newUser = new User({
+        const newUser = await User.create({
             username: req.body.username,
             email: req.body.email,
             password: hash,
@@ -26,7 +26,7 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
     const email = req.body.email
     try {
-        const user = await User.findOne({email})
+        const user = await User.findOne({ where: {email} })
         // Nếu user không tồn tại
         if (!user) {
             res.status(404).json({success:false, message:'User not found'})
@@ -42,13 +42,11 @@ export const login = async (req, res) => {
         // Destructuring assignment (gán phân rã): tách password và role
         // user._doc: truy vấn database và nhận được đối đối tượng user, các trường của user sẽ được lưu trong _doc
         // ... rest: sẽ chứa các giá trị còn lại của đối tượng user
-        const {password, role, ...rest} = user._doc
+        const {password, role, ...rest} = user.dataValues
 
         // create jwt token
         // jwt.sign(): Đây là hàm của thư viện jsonwebtoken dùng để tạo ra một token JWT token này sẽ chưa thông tin của id và role
-        const token = jwt.sign({id: user._id, role: user.role}, 
-            process.env.JWT_SECRET_KEY, {expiresIn: "15d"}
-        )
+        const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET_KEY, { expiresIn: "15d" });
         
         // set token in the browser cookies and send the response to the client
         res.cookie('accessToken', token, {
