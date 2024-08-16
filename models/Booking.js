@@ -1,35 +1,44 @@
-import mongoose from "mongoose";
+import { DataTypes } from "sequelize";
+import sequelize from "../sequelize.js";
+import Tour from './Tour.js';
+import User from './User.js';
 
-const bookingSchema = new mongoose.Schema(
-  {
-    userId: {
-      type: String
+const Booking = sequelize.define('Booking', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
     },
-    userEmail: {
-      type: String,
+    tour_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
     },
-    tourName: {
-        type: String,
-        required: true
+    user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
     },
-    fullName: {
-        type: String,
-        required: true,
+    booking_date: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
     },
-    guestSize: {
-        type: Number,
-        required: true,
+    status: {
+        type: DataTypes.ENUM('pending', 'confirmed', 'canceled'),
+        allowNull: false,
+        defaultValue: 'pending',
     },
-    phone: {
-        type: Number,
-        required: true,
+    payment_status: {
+        type: DataTypes.ENUM('paid', 'unpaid'),
+        allowNull: false,
+        defaultValue: 'unpaid',
     },
-    bookAt: {
-        type: Date,
-        required: true,
-    },
-  },
-  { timestamps: true }
-);
+}, {
+    timestamps: true,
+});
 
-export default mongoose.model("Booking", bookingSchema);
+// Định nghĩa mối quan hệ với Tour
+Booking.belongsTo(User, {foreignKey: 'user_id', as:'category'})
+
+// Định nghĩa mối quan hệ với Location
+Booking.belongsTo(Tour, { foreignKey: 'tour_id', as: 'location' })
+export default Booking;

@@ -13,7 +13,7 @@ const Location = sequelize.define('Location', {
     },
     description: {
         type: DataTypes.TEXT,
-        allowNull: false
+        allowNull: true
     },
     parent_id: {
         type: DataTypes.INTEGER,
