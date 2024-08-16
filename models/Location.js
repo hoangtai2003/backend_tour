@@ -1,24 +1,28 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../sequelize.js";
 
-
 const Location = sequelize.define('Location', {
+    id: {
+        type:DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
     name: {
         type: DataTypes.STRING,
+        allowNull: false
     },
     description: {
-        type: DataTypes.STRING
+        type: DataTypes.TEXT,
+        allowNull: false
     },
-    address: {
-        type: DataTypes.STRING
-    },
-    city: {
-        type: DataTypes.STRING
-    },
-    country: {
-        type: DataTypes.STRING
+    parent_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     }
 }, {
     timestamps: true
 });
+Location.belongsTo(Location, { foreignKey: 'parent_id', as: 'parent' })
+Location.hasMany(Location, { foreignKey: 'parent_id', as: 'children'})
+
 export default Location;

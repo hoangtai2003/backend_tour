@@ -2,63 +2,138 @@ import Location from '../models/Location.js'
 
 // create new location
 export const createLocation = async(req, res) => {
+    const {name, description, parent_id} = req.body
+
     try {
-        const newLocation = await Location.create(req.body)
-        res.status(200).json({success:true, message:'Successfully created', data: newLocation})
+        const newLocation = await Location.create({
+            name,
+            description,
+            parent_id: parent_id || 0
+        })
+
+        const locationWithRelations = await Location.findByPk(newLocation.id, {
+            include: [
+                {
+                    model: Location,
+                    as: 'parent'
+                },
+                {
+                    model: Location,
+                    as: 'children'
+                }
+            ]
+        })
+        res.status(200).json({success:true, message:'Location successfully created', data: locationWithRelations})
     } catch (error) {
-        res.status(500).json({success:false, message:'Failed to create. Try again'})
+        res.status(500).json({success:false, message:'Failed to create location. Try again'})
     }
 }
 
 // update location 
 export const updateLocation = async(req, res) => {
     const id = req.params.id
+    const {name, description, parent_id} = req.body
     try {
-        const location = await Location.findByPk(id)
-        if(!location){
+        const locationToUpdate = await Location.findByPk(id)
+        if(!locationToUpdate){
             return res.status(404).json({ success: false, message: 'Location not found' });
         }
-        await location.update(req.body)
-        res.status(200).json({success:true, message:'Successfully updated', data: location})
+        await location.update({
+            name,
+            description,
+            parent_id: parent_id || locationToUpdate.parent_id
+        })
+
+        const updatedLocation = await Location.findByPk(id, {
+            include: [
+                {
+                    model: Location,
+                    as: 'parent'
+                },
+                {
+                    model: Location,
+                    as: 'children'
+                }
+            ]
+        })
+        res.status(200).json({success:true, message:'Location successfully updated', data: updatedLocation})
     } catch (error) {
-        res.status(500).json({success:false, message:'Failed to update. Try again'})
+        res.status(500).json({success:false, message:'Failed to update location. Try again'})
     }
 }
 
 // delete location
-export const deleteLocation = async(req, res) => {
+export const deleteLocation= async(req, res) => {
     const id = req.params.id
-    try { 
-        const result = await Location.destroy({ where: { id } });
-        if (result === 0) {
+    try {
+        const locationToDelete = await Location.findByPk(id)
+
+        if (!locationToDelete) {
             return res.status(404).json({ success: false, message: 'Location not found' });
         }
-        res.status(200).json({success:true, message:'Successfully deleted'})
-    } catch(err) {
-        res.status(500).json({success:false, message:'Failed to delete. Try again'})
-    }
+
+        // Xóa tất cả danh mục con cần xóa
+        await Location.destroy({
+            where: {
+                parent_id: id
+            }
+        });
+
+        // Xóa danh mục chính
+        await locationToDelete.destroy()
+        res.status(200).json({
+            success: true,
+            message: 'Location successfully deleted'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete location. Try again later.'
+        });
+    } 
 }
 
 //get signle location 
-export const getSingleLocation= async(req, res) => {
-    const id = req.params.id
+export const getSingleLocation = async (req, res) => {
+    const id = req.params.id;
+
     try {
-        const location = await Location.findByPk(id)
+        // Tìm danh mục theo ID và bao gồm các danh mục con
+        const location = await Location.findByPk(id, {
+            include: [
+                { model: Location, as: 'parent' },
+                { model: Location, as: 'children' } 
+            ]
+        });
+
+        // Kiểm tra nếu danh mục không tồn tại
         if (!location) {
             return res.status(404).json({ success: false, message: 'Location not found' });
         }
-        res.status(200).json({success:true, message: "Successfully", data: location})
-    } catch(err) {
-        res.status(500).json({success:false, message:'Not Found'})
+
+        res.status(200).json({ success: true, message: 'Successfully fetched location', data: location });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to fetch location' });
     }
 }
 
 // get all location
 export const getAllLocation= async(req, res) => {
     try {
-        const locations = await Location.findAll()
-        res.status(200).json({success:true, message: "Successfully", data: locations})
-    } catch(err) {
-        res.status(500).json({success:false, message:'Not Found'})
+
+        const locations = await Location.findAll({
+            include: [
+                { model: Location, as: 'parent' },
+                { model: Location, as: 'children' } 
+            ]
+        });
+
+        if (!locations) {
+            return res.status(404).json({ success: false, message: 'Location not found' });
+        }
+
+        res.status(200).json({ success: true, message: 'Successfully fetched location', data: locations });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to fetch location' });
     }
 }
