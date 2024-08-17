@@ -85,18 +85,30 @@ export const getSingleTour = async (req, res) => {
 // get all tour
 export const getAllTour = async (req, res) => {
     // pagination
-    // Lấy số trang từ yêu cầu truy vấn trong HTTP
-    const page = parseInt(req.query.page)
+    const page = parseInt(req.query.page) || 0;  // Số trang, mặc định là 0 nếu không có giá trị
+    const limit = 8;  // Giới hạn số lượng tour mỗi trang
+    const offset = page * limit;  // Tính toán số tài liệu cần bỏ qua
+
     try {
-        // .skip() là một phương thức của MongoDB để bỏ qua một số lượng tài liệu nhất định.
-        // page * 8 tính toán số tài liệu cần bỏ qua. Ví dụ, nếu page là 1 (tức là trang thứ hai), nó bỏ qua 1 * 8 = 8 tài liệu
-        // limit() được sử dụng để giới hạn số tài liệu trả về bởi truy vấn
-        const allTour = await Tour.find({}).skip(page*8).limit(8).populate('reviews')
-        res.status(200).json({success:true, count: allTour.length, message: "Successfully", data: allTour})
-    } catch(err) {
-        res.status(500).json({success:false, message:'Not Found'})
+        // Sử dụng Sequelize để tìm tất cả các tour với phân trang
+        const { count, rows } = await Tour.findAndCountAll({
+            limit,     // Giới hạn số lượng tour mỗi trang
+            offset,    // Bỏ qua số lượng tour tương ứng với trang hiện tại
+        });
+
+        // Trả về kết quả cùng với số lượng tour tìm được
+        res.status(200).json({
+            success: true,
+            count: count,  // Tổng số tour có sẵn
+            message: "Successfully retrieved tours",
+            data: rows    // Dữ liệu tour của trang hiện tại
+        });
+    } catch (err) {
+        // Nếu có lỗi xảy ra, trả về phản hồi lỗi
+        res.status(500).json({ success: false, message: 'Failed to retrieve tours. Try again' });
     }
-}
+};
+
 
 // get tour by search
 export const getTourBySearch = async (req, res) => {
