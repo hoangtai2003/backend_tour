@@ -20,7 +20,7 @@ const Location = sequelize.define('Location', {
         allowNull: false
     }
 }, {
-    timestamps: true
+    timestamps: true,
 });
 Location.belongsTo(Location, { foreignKey: 'parent_id', as: 'parent' })
 Location.hasMany(Location, { foreignKey: 'parent_id', as: 'children'})

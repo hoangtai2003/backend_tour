@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../sequelize.js";
+
 const Tour = sequelize.define('Tour',{
     id: {
         type: DataTypes.INTEGER,
@@ -10,9 +11,15 @@ const Tour = sequelize.define('Tour',{
         type: DataTypes.STRING,
         allowNull: false,
     },
-    tour_code: {
-        type: DataTypes.STRING,
-        unique: true 
+    // Mô tả lịch trình
+    description_itinerary: {
+        type: DataTypes.TEXT,
+        allowNull: true,  
+    },
+    // Giới thiệu tour
+    introduct_tour: {
+        type: DataTypes.TEXT,
+        allowNull: true,  
     },
     price: {
         type: DataTypes.DECIMAL,
@@ -23,40 +30,28 @@ const Tour = sequelize.define('Tour',{
         type: DataTypes.STRING,
         allowNull: false
     },
-    // Ngày khởi hành
-    start_date: {
-        type: DataTypes.DATE,
-        allowNull: false,
-    },
-    // Ngày kết thúc
-    end_date: {
-        type: DataTypes.DATE,
-        allowNull: false,
-    },
     // Nơi khởi hành
     departure_city: {
         type: DataTypes.STRING,
         allowNull: false,  
     },
-    // Tổng số chỗ
-    total_seats: {
-        type: DataTypes.INTEGER,
+    transportations: {
+        type: DataTypes.STRING,
         allowNull: false
     },
-    // Số chỗ còn nhận
-    seats_available: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0
+    tour_image: {
+        type: DataTypes.STRING,
+        allowNull: false
     },
-    description: {
-        type: DataTypes.TEXT,
-        allowNull: true,  
+    itinerary: {
+        type: DataTypes.STRING,
+        allowNull: false
     },
-    
 },
-  { timestamps: true }
+  { timestamps: true,
+    tableName: "tours"
+   }
 );
-
 
 
 export default Tour;

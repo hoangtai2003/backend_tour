@@ -1,8 +1,24 @@
 import Tour from '../models/Tour.js'
 import { v4 as uuidv4 } from 'uuid';
-//create new tour 
+import TourChild from '../models/TourChild.js';
+
 export const createTour = async (req, res) => {
-    const { name, description, duration, departure_city, total_seats, price, start_date, end_date } = req.body;
+    const { 
+        name, 
+        description_itinerary, 
+        price, 
+        duration, 
+        departure_city, 
+        transportations, 
+        tour_image, 
+        itinerary,
+        start_date,
+        end_date,
+        price_adult,
+        price_child,
+        total_seats,
+        introduct_tour
+    } = req.body;
 
     const tourCodePrefix = "NDSGN";
     const uniqueId = Math.floor(Math.random() * 1000).toString().padStart(3, '0'); 
@@ -10,23 +26,49 @@ export const createTour = async (req, res) => {
     const tourCodeSuffix = uuidv4().slice(0, 2).toUpperCase(); 
 
     const tour_code = `${tourCodePrefix}${uniqueId}-${formattedDate}${tourCodeSuffix}-H`;
+
     try {
+        // Tạo tour mới trong bảng tours
         const newTour = await Tour.create({
-            name,
-            description,
-            tour_code,
+            name, 
+            description_itinerary, 
+            price, 
             duration, 
             departure_city, 
-            total_seats,
-            price,
-            start_date,
-            end_date
+            transportations, 
+            tour_image, 
+            itinerary,
+            introduct_tour
         });
-        res.status(200).json({success:true, message:'Tour successfully created', data: newTour});
+
+        // Sử dụng tour_id từ tour vừa tạo để tạo dữ liệu trong bảng tour_child
+        const newTourChild = await TourChild.create({
+            tour_id: newTour.id,  // Khóa ngoại liên kết với tour
+            tour_code,
+            start_date,
+            end_date,
+            price_adult,
+            price_child,
+            total_seats
+        });
+
+        res.status(200).json({ 
+            success: true, 
+            message: 'Tour successfully created', 
+            data: {
+                tour: newTour,
+                tour_child: newTourChild
+            }
+        });
     } catch (err) {
-        res.status(500).json({success:false, message:'Failed to create tour. Try again'});
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to create tour. Try again',
+            error: err.message
+        });
     }
 };
+
 
 
 
@@ -83,31 +125,40 @@ export const getSingleTour = async (req, res) => {
 }
 
 // get all tour
+
 export const getAllTour = async (req, res) => {
     // pagination
-    const page = parseInt(req.query.page) || 0;  // Số trang, mặc định là 0 nếu không có giá trị
+    const page = parseInt(req.query.page) || 1;  // Số trang, mặc định là 1 nếu không có giá trị
     const limit = 8;  // Giới hạn số lượng tour mỗi trang
-    const offset = page * limit;  // Tính toán số tài liệu cần bỏ qua
+    const offset = (page - 1) * limit;  // Tính toán số tài liệu cần bỏ qua
 
     try {
-        // Sử dụng Sequelize để tìm tất cả các tour với phân trang
+        // Sử dụng Sequelize để tìm tất cả các tour với phân trang và bao gồm TourChild
         const { count, rows } = await Tour.findAndCountAll({
             limit,     // Giới hạn số lượng tour mỗi trang
             offset,    // Bỏ qua số lượng tour tương ứng với trang hiện tại
+            include: {
+                model: TourChild,
+                as: 'tourChildren',
+                attributes: ['id', 'tour_code', 'start_date', 'end_date', 'price_adult', 'price_child', 'total_seats']
+            }
         });
 
         // Trả về kết quả cùng với số lượng tour tìm được
         res.status(200).json({
             success: true,
             count: count,  // Tổng số tour có sẵn
+            totalPages: Math.ceil(count / limit),  // Tổng số trang
+            currentPage: page,  // Trang hiện tại
             message: "Successfully retrieved tours",
             data: rows    // Dữ liệu tour của trang hiện tại
         });
     } catch (err) {
         // Nếu có lỗi xảy ra, trả về phản hồi lỗi
-        res.status(500).json({ success: false, message: 'Failed to retrieve tours. Try again' });
+        res.status(500).json({ success: false, err, message: 'Failed to retrieve tours. Try again' });
     }
 };
+
 
 
 // get tour by search
