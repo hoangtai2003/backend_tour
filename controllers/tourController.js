@@ -1,6 +1,9 @@
 import Tour from '../models/Tour.js'
 import { v4 as uuidv4 } from 'uuid';
 import TourChild from '../models/TourChild.js';
+import TourLocation from '../models/TourLocation.js';
+import Location from '../models/Location.js';
+import { model } from 'mongoose';
 
 export const createTour = async (req, res) => {
     const { 
@@ -17,7 +20,8 @@ export const createTour = async (req, res) => {
         price_adult,
         price_child,
         total_seats,
-        introduct_tour
+        introduct_tour, 
+        location_ids
     } = req.body;
 
     const tourCodePrefix = "NDSGN";
@@ -51,6 +55,16 @@ export const createTour = async (req, res) => {
             price_child,
             total_seats
         });
+        if (location_ids && Array.isArray(location_ids)) {
+            // location_ids.map(...) sẽ duyệt qua từng location_id trong mảng location_ids.
+            const tourLocationPromises = location_ids.map(location_id => {
+                return TourLocation.create({
+                    tour_id: newTour.id,
+                    location_id: location_id
+                });
+            });
+            await Promise.all(tourLocationPromises);
+        }
 
         res.status(200).json({ 
             success: true, 
@@ -137,11 +151,23 @@ export const getAllTour = async (req, res) => {
         const { count, rows } = await Tour.findAndCountAll({
             limit,     // Giới hạn số lượng tour mỗi trang
             offset,    // Bỏ qua số lượng tour tương ứng với trang hiện tại
-            include: {
-                model: TourChild,
-                as: 'tourChildren',
-                attributes: ['id', 'tour_code', 'start_date', 'end_date', 'price_adult', 'price_child', 'total_seats']
-            }
+            include: 
+                [
+                    {
+                        model: TourChild,
+                        as: 'tourChildren',
+                        attributes: ['id', 'tour_code', 'start_date', 'end_date', 'price_adult', 'price_child', 'total_seats']
+                    },
+                    {
+                        model: TourLocation,
+                        as: 'tourLocations',
+                        include: {
+                            model: Location,
+                            as: 'location',
+                            attributes: ["name"]
+                        }
+                    }
+                ] 
         });
 
         // Trả về kết quả cùng với số lượng tour tìm được
