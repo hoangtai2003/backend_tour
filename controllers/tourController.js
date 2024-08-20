@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import TourChild from '../models/TourChild.js';
 import TourLocation from '../models/TourLocation.js';
 import Location from '../models/Location.js';
-import { model } from 'mongoose';
 
 export const createTour = async (req, res) => {
     const { 
@@ -14,7 +13,6 @@ export const createTour = async (req, res) => {
         departure_city, 
         transportations, 
         tour_image, 
-        itinerary,
         start_date,
         end_date,
         price_adult,
@@ -24,15 +22,17 @@ export const createTour = async (req, res) => {
         location_ids
     } = req.body;
 
-    const tourCodePrefix = "NDSGN";
-    const uniqueId = Math.floor(Math.random() * 1000).toString().padStart(3, '0'); 
-    const formattedDate = new Date(start_date).toISOString().slice(0, 10).split('-').reverse().join('').slice(0, 6);
-    const tourCodeSuffix = uuidv4().slice(0, 2).toUpperCase(); 
-
-    const tour_code = `${tourCodePrefix}${uniqueId}-${formattedDate}${tourCodeSuffix}-H`;
-
     try {
-        // Tạo tour mới trong bảng tours
+
+
+        const tourCodePrefix = "NDSGN";
+        const uniqueId = Math.floor(Math.random() * 1000).toString().padStart(3, '0'); 
+        const formattedDate = new Date(start_date).toISOString().slice(0, 10).split('-').reverse().join('').slice(0, 6);
+        const tourCodeSuffix = uuidv4().slice(0, 2).toUpperCase(); 
+
+        const tour_code = `${tourCodePrefix}${uniqueId}-${formattedDate}${tourCodeSuffix}-H`;
+
+        // Create a new tour in the tours table
         const newTour = await Tour.create({
             name, 
             description_itinerary, 
@@ -41,13 +41,12 @@ export const createTour = async (req, res) => {
             departure_city, 
             transportations, 
             tour_image, 
-            itinerary,
             introduct_tour
         });
 
-        // Sử dụng tour_id từ tour vừa tạo để tạo dữ liệu trong bảng tour_child
+        // Use the tour_id from the newly created tour to create data in the tour_child table
         const newTourChild = await TourChild.create({
-            tour_id: newTour.id,  // Khóa ngoại liên kết với tour
+            tour_id: newTour.id,
             tour_code,
             start_date,
             end_date,
@@ -55,8 +54,9 @@ export const createTour = async (req, res) => {
             price_child,
             total_seats
         });
+
         if (location_ids && Array.isArray(location_ids)) {
-            // location_ids.map(...) sẽ duyệt qua từng location_id trong mảng location_ids.
+            // Map through location_ids and create entries in the TourLocation table
             const tourLocationPromises = location_ids.map(location_id => {
                 return TourLocation.create({
                     tour_id: newTour.id,
@@ -82,6 +82,7 @@ export const createTour = async (req, res) => {
         });
     }
 };
+
 
 
 

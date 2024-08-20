@@ -43,10 +43,6 @@ const Tour = sequelize.define('Tour',{
         type: DataTypes.STRING,
         allowNull: false
     },
-    itinerary: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
 },
   { timestamps: true,
     tableName: "tours"
