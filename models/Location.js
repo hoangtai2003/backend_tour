@@ -18,6 +18,10 @@ const Location = sequelize.define('Location', {
     parent_id: {
         type: DataTypes.INTEGER,
         allowNull: false
+    },
+    location_img: {
+        type: DataTypes.STRING,
+        allowNull: false
     }
 }, {
     timestamps: true,

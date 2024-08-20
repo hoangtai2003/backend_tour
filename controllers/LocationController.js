@@ -2,13 +2,14 @@ import Location from '../models/Location.js'
 
 // create new location
 export const createLocation = async(req, res) => {
-    const {name, description, parent_id} = req.body
+    const {name, description, parent_id, tour_img} = req.body
 
     try {
         const newLocation = await Location.create({
             name,
             description,
-            parent_id: parent_id || 0
+            parent_id: parent_id || 0,
+            tour_img
         })
 
         const locationWithRelations = await Location.findByPk(newLocation.id, {
@@ -41,7 +42,8 @@ export const updateLocation = async(req, res) => {
         await location.update({
             name,
             description,
-            parent_id: parent_id || locationToUpdate.parent_id
+            parent_id: parent_id || locationToUpdate.parent_id,
+            tour_img
         })
 
         const updatedLocation = await Location.findByPk(id, {
