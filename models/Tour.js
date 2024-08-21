@@ -41,7 +41,7 @@ const Tour = sequelize.define('Tour',{
     },
     tour_image: {
         type: DataTypes.STRING,
-        allowNull: false
+        // allowNull: false
     },
 },
   { timestamps: true,

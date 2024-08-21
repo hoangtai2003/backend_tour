@@ -56,7 +56,6 @@ export const createTour = async (req, res) => {
         });
 
         if (location_ids && Array.isArray(location_ids)) {
-            // Map through location_ids and create entries in the TourLocation table
             const tourLocationPromises = location_ids.map(location_id => {
                 return TourLocation.create({
                     tour_id: newTour.id,
@@ -84,55 +83,147 @@ export const createTour = async (req, res) => {
 };
 
 
-
-
-
 // update tour
 export const updateTour = async (req, res) => {
-    // Đây là cách lấy giá trị của tham số id từ URL
-    const id = req.params.id
-    const { name, description, duration, departure_city, total_seats, price, start_date, end_date } = req.body;
+    const id = req.params.id; 
+    const { 
+        name, 
+        description_itinerary, 
+        price, 
+        duration, 
+        departure_city, 
+        transportations, 
+        tour_image, 
+        start_date,
+        end_date,
+        price_adult,
+        price_child,
+        total_seats,
+        introduct_tour, 
+        location_ids
+    } = req.body;
+
     try {
-        const updateTour = await Tour.findByPk(id)
-        if(!updateTour){
+        const tour = await Tour.findByPk(id);
+        if (!tour) {
             return res.status(404).json({ success: false, message: 'Tour not found' });
         }
-        await updateTour.update({
-            name,
-            description,
-            duration,
-            departure_city,
-            total_seats,
+
+        // Update the tour details
+        await tour.update({
+            name, 
+            description_itinerary, 
             price, 
+            duration, 
+            departure_city, 
+            transportations, 
+            tour_image, 
+            introduct_tour
+        });
+
+        const tourChild = await TourChild.findOne({ where: { tour_id: id } });
+        if (!tourChild) {
+            return res.status(404).json({ success: false, message: 'Tour child not found' });
+        }
+
+        const tourCodePrefix = "NDSGN";
+        const uniqueId = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        const formattedDate = new Date(start_date).toISOString().slice(0, 10).split('-').reverse().join('').slice(0, 6);
+        const tourCodeSuffix = uuidv4().slice(0, 2).toUpperCase();
+        const tour_code = `${tourCodePrefix}${uniqueId}-${formattedDate}${tourCodeSuffix}-H`;
+
+
+        await tourChild.update({
+            tour_code,
             start_date,
-            end_date
-        })
-        res.status(200).json({success:true, message:'Tour successfully updated', data:updateTour})
-    } catch(err) {
-        res.status(500).json({success:false, message:'Failed to update tour. Try again'})
+            end_date,
+            price_adult,
+            price_child,
+            total_seats
+        });
+
+        if (location_ids && Array.isArray(location_ids)) {
+            await TourLocation.destroy({ where: { tour_id: id } });
+            const tourLocationPromises = location_ids.map(location_id => {
+                return TourLocation.create({
+                    tour_id: id,
+                    location_id: location_id
+                });
+            });
+            await Promise.all(tourLocationPromises);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Tour successfully updated',
+            data: {
+                tour,
+                tour_child: tourChild
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to update tour. Try again',
+            error: err.message 
+        });
     }
-}
+};
+
 
 // delete tour
 export const deleteTour = async (req, res) => {
-    const id = req.params.id
+    const id = req.params.id;
     try {
-        const tourToDelete = await Tour.findByPk(id)
+        const tourToDelete = await Tour.findByPk(id);
         if (!tourToDelete) {
             return res.status(404).json({ success: false, message: 'Tour not found' });
         }
-        await tourToDelete.destroy()
-        res.status(200).json({success:true, message:'Tour successfully deleted'})
-    } catch(err) {
-        res.status(500).json({success:false, message:'Failed to delete tour. Try again'})
+
+        // Delete related TourChild records
+        await TourChild.destroy({ where: { tour_id: id } });
+
+        // Delete related TourLocation records
+        await TourLocation.destroy({ where: { tour_id: id } });
+
+        // Finally, delete the Tour record
+        await tourToDelete.destroy();
+
+        res.status(200).json({ success: true, message: 'Tour successfully deleted' });
+    } catch (err) {
+        console.error('Error deleting tour:', err);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to delete tour. Try again', 
+            error: err.message 
+        });
     }
-}
+};
+
 
 // get single tour
 export const getSingleTour = async (req, res) => {
     const id = req.params.id
     try {
-        const tour = await Tour.findByPk(id)
+        const tour = await Tour.findByPk(id, {
+            include: 
+            [
+                {
+                    model: TourChild,
+                    as: 'tourChildren',
+                    attributes: ['id', 'tour_code', 'start_date', 'end_date', 'price_adult', 'price_child', 'total_seats']
+                },
+                {
+                    model: TourLocation,
+                    as: 'tourLocations',
+                    include: {
+                        model: Location,
+                        as: 'location',
+                        attributes: ["name"]
+                    }
+                }
+            ] 
+        })
         res.status(200).json({success:true, message: "Successfully", data: tour})
     } catch(err) {
         res.status(500).json({success:false, message:'Not Found'})
