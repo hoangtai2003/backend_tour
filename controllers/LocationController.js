@@ -2,14 +2,15 @@ import Location from '../models/Location.js'
 
 // create new location
 export const createLocation = async(req, res) => {
-    const {name, description, parent_id, tour_img} = req.body
+    const {name, description, parent_id, location_img, status} = req.body
 
     try {
         const newLocation = await Location.create({
             name,
             description,
             parent_id: parent_id || 0,
-            tour_img
+            location_img,
+            status
         })
 
         const locationWithRelations = await Location.findByPk(newLocation.id, {
@@ -26,24 +27,25 @@ export const createLocation = async(req, res) => {
         })
         res.status(200).json({success:true, message:'Location successfully created', data: locationWithRelations})
     } catch (error) {
-        res.status(500).json({success:false, message:'Failed to create location. Try again'})
+        res.status(500).json({success:false,  message:'Failed to create location. Try again'})
     }
 }
 
 // update location 
 export const updateLocation = async(req, res) => {
     const id = req.params.id
-    const {name, description, parent_id} = req.body
+    const {name, description, parent_id, location_img, status} = req.body
     try {
         const locationToUpdate = await Location.findByPk(id)
         if(!locationToUpdate){
             return res.status(404).json({ success: false, message: 'Location not found' });
         }
-        await location.update({
+        await locationToUpdate.update({
             name,
             description,
             parent_id: parent_id || locationToUpdate.parent_id,
-            tour_img
+            location_img,
+            status
         })
 
         const updatedLocation = await Location.findByPk(id, {
@@ -60,7 +62,7 @@ export const updateLocation = async(req, res) => {
         })
         res.status(200).json({success:true, message:'Location successfully updated', data: updatedLocation})
     } catch (error) {
-        res.status(500).json({success:false, message:'Failed to update location. Try again'})
+        res.status(500).json({success:false, error, message:'Failed to update location. Try again'})
     }
 }
 

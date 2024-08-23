@@ -44,7 +44,6 @@ app.use('/api/v1/booking', bookingRoute)
 app.use('/api/v1/location', locationRoute)
 
 app.post('/uploads', MultipartyMiddleware, (req, res) => {
-    console.log(req.files); // Log files received
     if (!req.files || !req.files.upload) {
         return res.status(400).json({
             uploaded: false,
