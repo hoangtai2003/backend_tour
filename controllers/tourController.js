@@ -235,14 +235,15 @@ export const getSingleTour = async (req, res) => {
 export const getAllTour = async (req, res) => {
     // pagination
     const page = parseInt(req.query.page) || 1;  // Số trang, mặc định là 1 nếu không có giá trị
-    const limit = 8;  // Giới hạn số lượng tour mỗi trang
+    const limit = 2;  // Giới hạn số lượng tour mỗi trang
     const offset = (page - 1) * limit;  // Tính toán số tài liệu cần bỏ qua
 
     try {
         // Sử dụng Sequelize để tìm tất cả các tour với phân trang và bao gồm TourChild
         const { count, rows } = await Tour.findAndCountAll({
             limit,     // Giới hạn số lượng tour mỗi trang
-            offset,    // Bỏ qua số lượng tour tương ứng với trang hiện tại
+            offset,     // Bỏ qua số lượng tour tương ứng với trang hiện tại
+            distinct: true,   // Sử dụng DISTINCT để loại bỏ các bản ghi trùng lặp
             include: 
                 [
                     {
