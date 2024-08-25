@@ -1,22 +1,31 @@
 import User from '../models/User.js'
 import bcrypt from 'bcryptjs'
-// create new user
 export const createUser = async (req, res) => {
-    const salt = bcrypt.genSaltSync(10)
-    const hash = bcrypt.hashSync(req.body.password, salt)
-    
-    const newUser = await User.create({
-        username: req.body.username,
-        email: req.body.email,
-        password: hash,
-        phone: req.body.phone
-    })
     try {
-        res.status(200).json({success:true, message:'Successfully created', data: newUser})
-    } catch(err) {
-        res.status(500).json({success:false, message:'Failed to create. Try again'})
+        const { username, email, password, phone, status, role } = req.body;
+
+        if (!password) {
+            return res.status(400).json({ success: false, message: 'Password is required' });
+        }
+
+        const salt = bcrypt.genSaltSync(10);
+        const hash = bcrypt.hashSync(password, salt);
+
+        const newUser = await User.create({
+            username,
+            email,
+            password: hash,
+            phone,
+            status,
+            role
+        });
+
+        res.status(200).json({ success: true, message: 'Successfully created', data: newUser });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Failed to create. Try again', error: err.message });
     }
-}
+};
+
 
 // update user 
 export const updateUser = async(req, res) => {
