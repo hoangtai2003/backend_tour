@@ -1,5 +1,5 @@
 import express from 'express'
-import { createLocation, deleteLocation, getAllLocation, getSingleLocation, updateLocation } from '../controllers/LocationController.js'
+import { createLocation, deleteLocation, getAllLocation, getAllLocationPagination, getSingleLocation, updateLocation } from '../controllers/LocationController.js'
 
 
 const router = express.Router()
@@ -17,6 +17,7 @@ router.delete('/:id', deleteLocation)
 router.get('/:id', getSingleLocation)
 
 // get all location
-router.get('/', getAllLocation)
+router.get('/', getAllLocationPagination)
 
+router.get('/all/getAllLocation', getAllLocation)
 export default router

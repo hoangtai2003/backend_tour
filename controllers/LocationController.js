@@ -122,9 +122,37 @@ export const getSingleLocation = async (req, res) => {
 }
 
 // get all location
-export const getAllLocation= async(req, res) => {
+export const getAllLocationPagination = async(req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 8;
+    const offset = (page - 1) * limit
     try {
 
+        const { count, rows } = await Location.findAndCountAll({
+            limit, 
+            offset,
+            distinct: true,
+            include: [
+                { model: Location, as: 'parent' },
+                { model: Location, as: 'children' } 
+            ]
+        });
+
+        res.status(200).json({
+            success: true,
+            count: count, 
+            totalPages: Math.ceil(count / limit),  
+            currentPage: page,  
+            message: "Successfully retrieved location",
+            data: rows   
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Failed to fetch location' });
+    }
+}
+
+export const getAllLocation = async (req, res) => {
+    try {
         const locations = await Location.findAll({
             include: [
                 { model: Location, as: 'parent' },

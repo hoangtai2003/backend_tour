@@ -29,7 +29,7 @@ export const login = async (req, res) => {
         const user = await User.findOne({ where: {email} })
         // Nếu user không tồn tại
         if (!user) {
-            res.status(404).json({success:false, message:'User not found'})
+            return res.status(404).json({success:false, message:'User not found'})
         }
         // kiểm tra password 
         const checkCorrectPassword = await bcrypt.compare(req.body.password, user.password)
