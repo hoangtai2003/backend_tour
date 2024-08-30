@@ -13,26 +13,34 @@ export const createTour = async (req, res) => {
         departure_city, 
         transportations, 
         tour_image, 
-        start_date,
-        end_date,
-        price_adult,
-        price_child,
-        total_seats,
         introduct_tour, 
-        location_ids
+        location_ids,
+        tour_children // Add this field
     } = req.body;
 
     try {
+        // Validate dates
+        const validateDate = (date) => {
+            return !isNaN(Date.parse(date));
+        };
 
+        if (tour_children && Array.isArray(tour_children)) {
+            for (const child of tour_children) {
+                if (!validateDate(child.start_date) || !validateDate(child.end_date)) {
+                    throw new Error('Invalid date value in tour_children');
+                }
+            }
+        }
 
+        // Generate tour code
         const tourCodePrefix = "NDSGN";
         const uniqueId = Math.floor(Math.random() * 1000).toString().padStart(3, '0'); 
-        const formattedDate = new Date(start_date).toISOString().slice(0, 10).split('-').reverse().join('').slice(0, 6);
+        const startDate = new Date(tour_children && tour_children[0] && tour_children[0].start_date);
+        const formattedDate = startDate ? startDate.toISOString().slice(0, 10).split('-').reverse().join('').slice(0, 6) : '000000';
         const tourCodeSuffix = uuidv4().slice(0, 2).toUpperCase(); 
-
         const tour_code = `${tourCodePrefix}${uniqueId}-${formattedDate}${tourCodeSuffix}-H`;
 
-        // Create a new tour in the tours table
+        // Create tour
         const newTour = await Tour.create({
             name, 
             description_itinerary, 
@@ -44,22 +52,27 @@ export const createTour = async (req, res) => {
             introduct_tour
         });
 
-        // Use the tour_id from the newly created tour to create data in the tour_child table
-        const newTourChild = await TourChild.create({
-            tour_id: newTour.id,
-            tour_code,
-            start_date,
-            end_date,
-            price_adult,
-            price_child,
-            total_seats
-        });
+        // Create tour children
+        if (tour_children && Array.isArray(tour_children)) {
+            const tourChildPromises = tour_children.map(child => {
+                if (!validateDate(child.start_date) || !validateDate(child.end_date)) {
+                    throw new Error('Invalid date value in tour_children');
+                }
+                return TourChild.create({
+                    tour_id: newTour.id,
+                    tour_code,
+                    ...child
+                });
+            });
+            await Promise.all(tourChildPromises);
+        }
 
+        // Create tour locations
         if (location_ids && Array.isArray(location_ids)) {
             const tourLocationPromises = location_ids.map(location_id => {
                 return TourLocation.create({
                     tour_id: newTour.id,
-                    location_id: location_id
+                    location_id
                 });
             });
             await Promise.all(tourLocationPromises);
@@ -70,10 +83,11 @@ export const createTour = async (req, res) => {
             message: 'Tour successfully created', 
             data: {
                 tour: newTour,
-                tour_child: newTourChild
+                tour_children // Include child tours in the response
             }
         });
     } catch (err) {
+        console.error('Error creating tour:', err);
         res.status(500).json({ 
             success: false, 
             message: 'Failed to create tour. Try again',
@@ -81,6 +95,7 @@ export const createTour = async (req, res) => {
         });
     }
 };
+
 
 
 // update tour
