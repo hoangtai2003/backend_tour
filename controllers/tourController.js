@@ -100,7 +100,7 @@ export const createTour = async (req, res) => {
 
 // update tour
 export const updateTour = async (req, res) => {
-    const id = req.params.id;
+    const id = req.params.id; 
     const { 
         name, 
         description_itinerary, 
@@ -120,7 +120,11 @@ export const updateTour = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Tour not found' });
         }
 
-        // Update the main tour details
+        const validateDate = (date) => {
+            return !isNaN(Date.parse(date));
+        };
+
+        // Update the tour details
         await tour.update({
             name, 
             description_itinerary, 
@@ -132,47 +136,38 @@ export const updateTour = async (req, res) => {
             introduct_tour
         });
 
-        // Handle tour children
         if (tour_children && Array.isArray(tour_children)) {
             for (const child of tour_children) {
-                // Validate date values
-                const { start_date, end_date, price_adult, price_child, total_seats, id: childId } = child;
-                if (!start_date || !end_date || isNaN(Date.parse(start_date)) || isNaN(Date.parse(end_date))) {
+                if (!validateDate(child.start_date) || !validateDate(child.end_date)) {
                     throw new Error('Invalid date value in tour_children');
                 }
 
-                let tourChild;
-                if (childId) {
-                    // If childId is provided, find the existing child tour record
-                    tourChild = await TourChild.findByPk(childId);
-                    if (!tourChild) {
-                        return res.status(404).json({ success: false, message: `Tour child with id ${childId} not found` });
+                // Create or update TourChild
+                const [tourChild, created] = await TourChild.findOrCreate({
+                    where: { id: child.id || null, tour_id: id },
+                    defaults: {
+                        start_date: child.start_date,
+                        end_date: child.end_date,
+                        price_adult: child.price_adult,
+                        price_child: child.price_child,
+                        total_seats: child.total_seats,
+                        tour_code: generateTourCode(child.start_date), // Function to generate tour_code
                     }
-                } else {
-                    // Create a new child tour record if no id is provided
-                    tourChild = await TourChild.create({ tour_id: id });
-                }
-
-                // Generate a new tour code based on the start date
-                const tourCodePrefix = "NDSGN";
-                const uniqueId = Math.floor(Math.random() * 1000).toString().padStart(3, '0'); 
-                const formattedDate = new Date(start_date).toISOString().slice(0, 10).split('-').reverse().join('').slice(0, 6);
-                const tourCodeSuffix = uuidv4().slice(0, 2).toUpperCase(); 
-                const tour_code = `${tourCodePrefix}${uniqueId}-${formattedDate}${tourCodeSuffix}-H`;
-
-                // Update the child tour details
-                await tourChild.update({
-                    tour_code,
-                    start_date,
-                    end_date,
-                    price_adult,
-                    price_child,
-                    total_seats
                 });
+
+                if (!created) {
+                    await tourChild.update({
+                        start_date: child.start_date,
+                        end_date: child.end_date,
+                        price_adult: child.price_adult,
+                        price_child: child.price_child,
+                        total_seats: child.total_seats,
+                        tour_code: generateTourCode(child.start_date), // Function to generate tour_code
+                    });
+                }
             }
         }
 
-        // Update the locations if provided
         if (location_ids && Array.isArray(location_ids)) {
             await TourLocation.destroy({ where: { tour_id: id } });
             const tourLocationPromises = location_ids.map(location_id => {
@@ -188,8 +183,7 @@ export const updateTour = async (req, res) => {
             success: true,
             message: 'Tour successfully updated',
             data: {
-                tour,
-                tour_children
+                tour
             }
         });
     } catch (err) {
@@ -200,6 +194,16 @@ export const updateTour = async (req, res) => {
         });
     }
 };
+
+// Helper function to generate tour_code
+const generateTourCode = (startDate) => {
+    const tourCodePrefix = "NDSGN";
+    const uniqueId = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const formattedDate = new Date(startDate).toISOString().slice(0, 10).split('-').reverse().join('').slice(0, 6);
+    const tourCodeSuffix = uuidv4().slice(0, 2).toUpperCase();
+    return `${tourCodePrefix}${uniqueId}-${formattedDate}${tourCodeSuffix}-H`;
+};
+
 
 
 // delete tour
