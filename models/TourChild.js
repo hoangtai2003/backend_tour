@@ -37,6 +37,9 @@ const TourChild = sequelize.define('TourChild', {
         type: DataTypes.INTEGER,
         allowNull: false
     },
+    price_sale: {
+        type: DataTypes.INTEGER
+    },
     total_seats: {
         type: DataTypes.INTEGER,
         allowNull: false

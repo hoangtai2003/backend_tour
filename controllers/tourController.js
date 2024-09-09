@@ -83,7 +83,7 @@ export const createTour = async (req, res) => {
             message: 'Tour successfully created', 
             data: {
                 tour: newTour,
-                tour_children // Include child tours in the response
+                tour_children 
             }
         });
     } catch (err) {
@@ -151,6 +151,7 @@ export const updateTour = async (req, res) => {
                         price_adult: child.price_adult,
                         price_child: child.price_child,
                         total_seats: child.total_seats,
+                        price_sale: child.price_sale,
                         tour_code: generateTourCode(child.start_date), // Function to generate tour_code
                     }
                 });
@@ -162,6 +163,7 @@ export const updateTour = async (req, res) => {
                         price_adult: child.price_adult,
                         price_child: child.price_child,
                         total_seats: child.total_seats,
+                        price_sale: child.price_sale,
                         tour_code: generateTourCode(child.start_date), // Function to generate tour_code
                     });
                 }
@@ -246,7 +248,7 @@ export const getSingleTour = async (req, res) => {
                 {
                     model: TourChild,
                     as: 'tourChildren',
-                    attributes: ['id', 'tour_code', 'start_date', 'end_date', 'price_adult', 'price_child', 'total_seats']
+                    attributes: ['id', 'tour_code', 'start_date', 'end_date', 'price_adult', 'price_child', 'total_seats', 'price_sale']
                 },
                 {
                     model: TourLocation,
@@ -284,7 +286,7 @@ export const getAllTour = async (req, res) => {
                     {
                         model: TourChild,
                         as: 'tourChildren',
-                        attributes: ['id', 'tour_code', 'start_date', 'end_date', 'price_adult', 'price_child', 'total_seats']
+                        attributes: ['id', 'tour_code', 'start_date', 'end_date', 'price_adult', 'price_child', 'total_seats', 'price_sale']
                     },
                     {
                         model: TourLocation,

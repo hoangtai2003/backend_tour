@@ -1,9 +1,18 @@
 import express from 'express'
 import { createTour, updateTour, deleteTour, getSingleTour, getAllTour, getTourBySearch, getFeaturedTour, getTourCount }  from '../controllers/TourController.js'
+import multer from 'multer'
+
+const storage = multer.diskStorage({
+    destination: "images/tours",
+    filename: (req, file, cb) => {
+        return cb(null, `${Date.now()}${file.originalname}`)
+    }
+})
+const upload = multer({storage: storage})
 const router = express.Router()
 
 // create new tour
-router.post('/', createTour)
+router.post('/', upload.single("image"), createTour)
 
 // update tour
 router.put('/:id', updateTour)
