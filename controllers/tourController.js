@@ -15,7 +15,7 @@ export const createTour = async (req, res) => {
         tour_image, 
         introduct_tour, 
         location_ids,
-        tour_children // Add this field
+        tour_children 
     } = req.body;
 
     try {

@@ -22,7 +22,7 @@ const Tour = sequelize.define('Tour',{
         allowNull: true,  
     },
     price: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: false
     },
     // Thời gian tour (ví dụ: 3N2Đ - 3 ngày 2 đêm)
