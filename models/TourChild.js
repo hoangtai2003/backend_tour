@@ -30,11 +30,11 @@ const TourChild = sequelize.define('TourChild', {
         allowNull: false
     },
     price_adult: {
-        type: DataTypes.DECIMAL(10,2),
+        type: DataTypes.STRING,
         allowNull: false
     },
     price_child: {
-        type: DataTypes.DECIMAL(10,2),
+        type: DataTypes.STRING,
         allowNull: false
     },
     total_seats: {

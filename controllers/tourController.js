@@ -270,7 +270,7 @@ export const getSingleTour = async (req, res) => {
 export const getAllTour = async (req, res) => {
     // pagination
     const page = parseInt(req.query.page) || 1;  // Số trang, mặc định là 1 nếu không có giá trị
-    const limit = 8;  // Giới hạn số lượng tour mỗi trang
+    const limit = 9;  // Giới hạn số lượng tour mỗi trang
     const offset = (page - 1) * limit;  // Tính toán số tài liệu cần bỏ qua
 
     try {
