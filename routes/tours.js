@@ -2,32 +2,31 @@ import express from 'express'
 import { createTour, updateTour, deleteTour, getSingleTour, getAllTour, getTourBySearch, getFeaturedTour, getTourCount }  from '../controllers/TourController.js'
 import multer from 'multer'
 
+// Configuring multer storage
 const storage = multer.diskStorage({
-    destination: "images/tours",
+    destination: (req, file, cb) => {
+      cb(null, 'images/tours/'); // Directory to store images
+    },
     filename: (req, file, cb) => {
-        return cb(null, `${Date.now()}${file.originalname}`)
+      cb(null, Date.now() + '-' + file.originalname); // Generate unique filename
     }
-})
-const upload = multer({storage: storage})
-const router = express.Router()
+});
 
-// create new tour
-router.post('/', upload.single("image"), createTour)
+// Initialize multer middleware
+const upload = multer({ storage: storage });
 
-// update tour
-router.put('/:id', updateTour)
+const router = express.Router();
 
-// delete tour
-router.delete('/:id', deleteTour)
+// Create new tour with image uploads
+router.post('/', upload.array('tour_image', 10), createTour);
 
-// get single tour
-router.get('/:id', getSingleTour)
+// Other routes
+router.put('/:id', updateTour);
+router.delete('/:id', deleteTour);
+router.get('/:id', getSingleTour);
+router.get('/', getAllTour);
+router.get('/search/getTourBySearch', getTourBySearch);
+router.get('/search/getFeaturedTours', getFeaturedTour);
+router.get('/search/getTourCount', getTourCount);
 
-// get all tour
-router.get('/', getAllTour)
-
-// get tour by search
-router.get('/search/getTourBySearch', getTourBySearch)
-router.get('/search/getFeaturedTours', getFeaturedTour)
-router.get('/search/getTourCount', getTourCount)
-export default router;  
+export default router;

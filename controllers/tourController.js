@@ -3,7 +3,9 @@ import { v4 as uuidv4 } from 'uuid';
 import TourChild from '../models/TourChild.js';
 import TourLocation from '../models/TourLocation.js';
 import Location from '../models/Location.js';
-
+import TourImage from "../models/TourImage.js"
+import path from 'path';
+import fs from 'fs';
 export const createTour = async (req, res) => {
     const { 
         name, 
@@ -11,21 +13,28 @@ export const createTour = async (req, res) => {
         price, 
         duration, 
         departure_city, 
-        transportations, 
-        tour_image, 
+        transportations,
         introduct_tour, 
         location_ids,
-        tour_children 
+        tour_children
     } = req.body;
 
+    // Get uploaded tour images from req.files
+    const tour_images = req.files;
+
     try {
+        // Parse JSON arrays
+        const locations = JSON.parse(location_ids || '[]');
+        const children = JSON.parse(tour_children || '[]');
+
         // Validate dates
         const validateDate = (date) => {
-            return !isNaN(Date.parse(date));
+            const parsedDate = new Date(date);
+            return !isNaN(parsedDate.getTime()); // Check if the date is valid
         };
 
-        if (tour_children && Array.isArray(tour_children)) {
-            for (const child of tour_children) {
+        if (children && Array.isArray(children)) {
+            for (const child of children) {
                 if (!validateDate(child.start_date) || !validateDate(child.end_date)) {
                     throw new Error('Invalid date value in tour_children');
                 }
@@ -35,8 +44,8 @@ export const createTour = async (req, res) => {
         // Generate tour code
         const tourCodePrefix = "NDSGN";
         const uniqueId = Math.floor(Math.random() * 1000).toString().padStart(3, '0'); 
-        const startDate = new Date(tour_children && tour_children[0] && tour_children[0].start_date);
-        const formattedDate = startDate ? startDate.toISOString().slice(0, 10).split('-').reverse().join('').slice(0, 6) : '000000';
+        const startDate = new Date(children && children[0] && children[0].start_date);
+        const formattedDate = startDate.toISOString().slice(2, 10).replace(/-/g, ''); // Format as YYMMDD
         const tourCodeSuffix = uuidv4().slice(0, 2).toUpperCase(); 
         const tour_code = `${tourCodePrefix}${uniqueId}-${formattedDate}${tourCodeSuffix}-H`;
 
@@ -48,28 +57,38 @@ export const createTour = async (req, res) => {
             duration, 
             departure_city, 
             transportations, 
-            tour_image, 
-            introduct_tour
+            introduct_tour,
+            tour_code
         });
 
         // Create tour children
-        if (tour_children && Array.isArray(tour_children)) {
-            const tourChildPromises = tour_children.map(child => {
-                if (!validateDate(child.start_date) || !validateDate(child.end_date)) {
-                    throw new Error('Invalid date value in tour_children');
-                }
+        if (children && Array.isArray(children)) {
+            const tourChildPromises = children.map(child => {
                 return TourChild.create({
                     tour_id: newTour.id,
-                    tour_code,
                     ...child
                 });
             });
             await Promise.all(tourChildPromises);
         }
 
+        // Create tour images
+        if (tour_images && Array.isArray(tour_images)) {
+            const tourImagePromises = tour_images.map(tour_image => {
+                const imageUrl = `http://localhost:4000/images/tours/${tour_image.filename}`;
+
+                return TourImage.create({
+                    tour_id: newTour.id,
+                    image_url: imageUrl
+                });
+            });
+            await Promise.all(tourImagePromises);
+        }
+
+
         // Create tour locations
-        if (location_ids && Array.isArray(location_ids)) {
-            const tourLocationPromises = location_ids.map(location_id => {
+        if (locations && Array.isArray(locations)) {
+            const tourLocationPromises = locations.map(location_id => {
                 return TourLocation.create({
                     tour_id: newTour.id,
                     location_id
@@ -83,11 +102,10 @@ export const createTour = async (req, res) => {
             message: 'Tour successfully created', 
             data: {
                 tour: newTour,
-                tour_children 
+                tour_children: children 
             }
         });
     } catch (err) {
-        console.error('Error creating tour:', err);
         res.status(500).json({ 
             success: false, 
             message: 'Failed to create tour. Try again',
@@ -95,7 +113,6 @@ export const createTour = async (req, res) => {
         });
     }
 };
-
 
 
 // update tour
@@ -258,6 +275,11 @@ export const getSingleTour = async (req, res) => {
                         as: 'location',
                         attributes: ["name"]
                     }
+                },
+                {
+                    model: TourImage,
+                    as:'tourImage',
+                    attributes: ['image_url']
                 }
             ] 
         })
@@ -296,6 +318,11 @@ export const getAllTour = async (req, res) => {
                             as: 'location',
                             attributes: ["name"]
                         }
+                    },
+                    {
+                        model: TourImage,
+                        as:'tourImage',
+                        attributes: ['image_url']
                     }
                 ] 
         });

@@ -39,13 +39,10 @@ const Tour = sequelize.define('Tour',{
         type: DataTypes.STRING,
         allowNull: false
     },
-    tour_image: {
-        type: DataTypes.STRING,
-        // allowNull: false
-    },
 },
-  { timestamps: true,
-    tableName: "tours"
+    { 
+        timestamps: true,
+        tableName: "tours"
    }
 );
 
