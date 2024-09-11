@@ -11,8 +11,8 @@ TourChild.belongsTo(Tour, { foreignKey: 'tour_id', as: 'tour' });
 
 
 // The relationship of the three tables Tour, Location and TourLoation
-Tour.hasMany(TourLocation, { foreignKey: 'tour_id', as: 'tourLocations' });
-Location.hasMany(TourLocation, { foreignKey: 'location_id', as: 'tourLocations' });
+Tour.belongsToMany(Location, { through: TourLocation, foreignKey: 'tour_id', as: 'locations' });
+Location.belongsToMany(Tour, { through: TourLocation, foreignKey: 'location_id', as: 'tours' });
 TourLocation.belongsTo(Tour, { foreignKey: 'tour_id', as: 'tour' });
 TourLocation.belongsTo(Location, { foreignKey: 'location_id', as: 'location' });
 

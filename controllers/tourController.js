@@ -4,6 +4,7 @@ import TourChild from '../models/TourChild.js';
 import TourLocation from '../models/TourLocation.js';
 import Location from '../models/Location.js';
 import TourImage from "../models/TourImage.js"
+import { Op, where } from 'sequelize';
 export const createTour = async (req, res) => {
     const { 
         name, 
@@ -277,13 +278,10 @@ export const getSingleTour = async (req, res) => {
                     attributes: ['id', 'tour_code', 'start_date', 'end_date', 'price_adult', 'price_child', 'total_seats', 'price_sale']
                 },
                 {
-                    model: TourLocation,
-                    as: 'tourLocations',
-                    include: {
-                        model: Location,
-                        as: 'location',
-                        attributes: ["name"]
-                    }
+                    model: Location,
+                    as: 'locations',
+                    through: { attributes: ['location_id'] }, 
+                    attributes: ['name']
                 },
                 {
                     model: TourImage,
@@ -302,16 +300,16 @@ export const getSingleTour = async (req, res) => {
 
 export const getAllTour = async (req, res) => {
     // pagination
-    const page = parseInt(req.query.page) || 1;  // Số trang, mặc định là 1 nếu không có giá trị
-    const limit = 9;  // Giới hạn số lượng tour mỗi trang
-    const offset = (page - 1) * limit;  // Tính toán số tài liệu cần bỏ qua
+    const page = parseInt(req.query.page) || 1; 
+    const limit = 9;  
+    const offset = (page - 1) * limit;  
 
     try {
-        // Sử dụng Sequelize để tìm tất cả các tour với phân trang và bao gồm TourChild
+     
         const { count, rows } = await Tour.findAndCountAll({
-            limit,     // Giới hạn số lượng tour mỗi trang
-            offset,     // Bỏ qua số lượng tour tương ứng với trang hiện tại
-            distinct: true,   // Sử dụng DISTINCT để loại bỏ các bản ghi trùng lặp
+            limit,    
+            offset,    
+            distinct: true,   
             include: 
                 [
                     {
@@ -320,13 +318,10 @@ export const getAllTour = async (req, res) => {
                         attributes: ['id', 'tour_code', 'start_date', 'end_date', 'price_adult', 'price_child', 'total_seats', 'price_sale']
                     },
                     {
-                        model: TourLocation,
-                        as: 'tourLocations',
-                        include: {
-                            model: Location,
-                            as: 'location',
-                            attributes: ["name"]
-                        }
+                        model: Location,
+                        as: 'locations',
+                        through: { attributes: [] },  // Bỏ qua các cột trung gian từ bảng TourLocation
+                        attributes: ['name']
                     },
                     {
                         model: TourImage,
@@ -335,23 +330,67 @@ export const getAllTour = async (req, res) => {
                     }
                 ] 
         });
-
-        // Trả về kết quả cùng với số lượng tour tìm được
         res.status(200).json({
             success: true,
-            count: count,  // Tổng số tour có sẵn
-            totalPages: Math.ceil(count / limit),  // Tổng số trang
-            currentPage: page,  // Trang hiện tại
+            count: count, 
+            totalPages: Math.ceil(count / limit), 
+            currentPage: page, 
             message: "Successfully retrieved tours",
-            data: rows    // Dữ liệu tour của trang hiện tại
+            data: rows    
         });
     } catch (err) {
-        // Nếu có lỗi xảy ra, trả về phản hồi lỗi
+       
         res.status(500).json({ success: false, err, message: 'Failed to retrieve tours. Try again' });
     }
 };
 
-
+export const getRelatedTours = async(req, res) => {
+    const tourId = req.params.id
+    try {
+        const currentTour = await Tour.findByPk(tourId, {
+            include: [
+                {
+                    model: Location,
+                    as: 'locations', // Lấy các địa điểm của tour hiện tại
+                    attributes: ['id', 'name'] 
+                }
+            ]
+        })
+        if (!currentTour) {
+            return res.status(404).json({ success: false, message: 'Tour not found' });
+        }
+        const currentLocationIds = currentTour.locations.map(location => location.id)
+        if (currentLocationIds.length === 0) {
+            return res.status(400).json({ success: false, message: 'No locations found for this tour' });
+        }
+        const relatedTours = await Tour.findAll({
+            incluce: [
+                {
+                    model: Location,
+                    as: 'locations',
+                    where: {
+                        id: { [Op.in]: currentLocationIds} // Lọc các tour có địa điểm trùng với tour hiện tại
+                    },
+                    attributes: ['id', 'name']
+                }
+            ],
+            where: {
+                id: { [Op.ne]: tourId } // Loại trừ tour hiện tại ra khỏi kết quả
+            },
+            group: ['Tour.id'] // Đảm bảo mỗi tour chỉ xuất hiện một lần
+        })
+        res.status(200).json({
+            success: true,
+            data: relatedTours
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve related tours',
+            error: error.message
+        });
+    }
+}
 
 // get tour by search
 export const getTourBySearch = async (req, res) => {

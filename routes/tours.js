@@ -1,5 +1,5 @@
 import express from 'express'
-import { createTour, updateTour, deleteTour, getSingleTour, getAllTour, getTourBySearch, getFeaturedTour, getTourCount }  from '../controllers/TourController.js'
+import { createTour, updateTour, deleteTour, getSingleTour, getAllTour, getTourBySearch, getFeaturedTour, getTourCount, getRelatedTours }  from '../controllers/TourController.js'
 import multer from 'multer'
 
 
@@ -36,6 +36,7 @@ router.put('/:id', upload.array('tour_image', 10), updateTour);
 router.delete('/:id', deleteTour);
 router.get('/:id', getSingleTour);
 router.get('/', getAllTour);
+router.get('/:id/related', getRelatedTours)
 router.get('/search/getTourBySearch', getTourBySearch);
 router.get('/search/getFeaturedTours', getFeaturedTour);
 router.get('/search/getTourCount', getTourCount);
