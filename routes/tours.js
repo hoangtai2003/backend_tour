@@ -37,6 +37,8 @@ router.delete('/:id', deleteTour);
 router.get('/:id', getSingleTour);
 router.get('/', getAllTour);
 router.get('/:id/related', getRelatedTours)
+
+
 router.get('/search/getTourBySearch', getTourBySearch);
 router.get('/search/getFeaturedTours', getFeaturedTour);
 router.get('/search/getTourCount', getTourCount);

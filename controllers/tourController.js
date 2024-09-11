@@ -342,43 +342,49 @@ export const getAllTour = async (req, res) => {
        
         res.status(500).json({ success: false, err, message: 'Failed to retrieve tours. Try again' });
     }
-};
+};  
 
-export const getRelatedTours = async(req, res) => {
-    const tourId = req.params.id
+export const getRelatedTours = async (req, res) => {
+    const tourId = req.params.id;
     try {
+        // Tìm tour hiện tại
         const currentTour = await Tour.findByPk(tourId, {
             include: [
                 {
                     model: Location,
-                    as: 'locations', // Lấy các địa điểm của tour hiện tại
-                    attributes: ['id', 'name'] 
+                    as: 'locations',  // Lấy các địa điểm của tour hiện tại
+                    attributes: ['id', 'name']
                 }
             ]
         })
         if (!currentTour) {
             return res.status(404).json({ success: false, message: 'Tour not found' });
         }
-        const currentLocationIds = currentTour.locations.map(location => location.id)
+        // Lấy danh sách ID địa điểm từ tour hiện tại
+        const currentLocationIds = currentTour.locations.map(location => location.id);
         if (currentLocationIds.length === 0) {
             return res.status(400).json({ success: false, message: 'No locations found for this tour' });
         }
+
+        // Tìm các tour liên quan có cùng địa điểm (loại trừ tour hiện tại)
         const relatedTours = await Tour.findAll({
-            incluce: [
+            include: [
                 {
                     model: Location,
                     as: 'locations',
                     where: {
-                        id: { [Op.in]: currentLocationIds} // Lọc các tour có địa điểm trùng với tour hiện tại
+                        id: { [Op.in]: currentLocationIds }  // Lọc các tour có địa điểm chung với tour hiện tại
                     },
-                    attributes: ['id', 'name']
+                    attributes: ['id', 'name'],
+                    through: { attributes: [] }  // Bỏ qua các cột trung gian của bảng TourLocation
                 }
             ],
             where: {
-                id: { [Op.ne]: tourId } // Loại trừ tour hiện tại ra khỏi kết quả
+                id: { [Op.ne]: tourId }  // Loại trừ tour hiện tại
             },
-            group: ['Tour.id'] // Đảm bảo mỗi tour chỉ xuất hiện một lần
-        })
+            distinct: true  // Đảm bảo các tour không bị trùng lặp
+        });
+
         res.status(200).json({
             success: true,
             data: relatedTours
@@ -390,7 +396,8 @@ export const getRelatedTours = async(req, res) => {
             error: error.message
         });
     }
-}
+};
+
 
 // get tour by search
 export const getTourBySearch = async (req, res) => {
