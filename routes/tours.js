@@ -32,7 +32,7 @@ router.post('/upload', upload.single('upload'), (req, res) => {
 router.post('/', upload.array('tour_image', 10), createTour);
 
 
-router.put('/:id', updateTour);
+router.put('/:id', upload.array('tour_image', 10), updateTour);
 router.delete('/:id', deleteTour);
 router.get('/:id', getSingleTour);
 router.get('/', getAllTour);

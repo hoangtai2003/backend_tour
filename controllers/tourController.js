@@ -4,8 +4,6 @@ import TourChild from '../models/TourChild.js';
 import TourLocation from '../models/TourLocation.js';
 import Location from '../models/Location.js';
 import TourImage from "../models/TourImage.js"
-import path from 'path';
-import fs from 'fs';
 export const createTour = async (req, res) => {
     const { 
         name, 
@@ -19,18 +17,18 @@ export const createTour = async (req, res) => {
         tour_children
     } = req.body;
 
-    // Get uploaded tour images from req.files
+   
     const tour_images = req.files;
 
     try {
-        // Parse JSON arrays
+        
         const locations = JSON.parse(location_ids || '[]');
         const children = JSON.parse(tour_children || '[]');
 
-        // Validate dates
+       
         const validateDate = (date) => {
             const parsedDate = new Date(date);
-            return !isNaN(parsedDate.getTime()); // Check if the date is valid
+            return !isNaN(parsedDate.getTime()); 
         };
 
         if (children && Array.isArray(children)) {
@@ -45,7 +43,7 @@ export const createTour = async (req, res) => {
         const tourCodePrefix = "NDSGN";
         const uniqueId = Math.floor(Math.random() * 1000).toString().padStart(3, '0'); 
         const startDate = new Date(children && children[0] && children[0].start_date);
-        const formattedDate = startDate.toISOString().slice(2, 10).replace(/-/g, ''); // Format as YYMMDD
+        const formattedDate = startDate.toISOString().slice(2, 10).replace(/-/g, ''); 
         const tourCodeSuffix = uuidv4().slice(0, 2).toUpperCase(); 
         const tour_code = `${tourCodePrefix}${uniqueId}-${formattedDate}${tourCodeSuffix}-H`;
 
@@ -125,13 +123,14 @@ export const updateTour = async (req, res) => {
         duration, 
         departure_city, 
         transportations, 
-        tour_image, 
         introduct_tour, 
         location_ids,
         tour_children
     } = req.body;
-
+    const tour_images = req.files;
     try {
+        const locations = JSON.parse(location_ids || '[]');
+        const children = JSON.parse(tour_children || '[]');
         const tour = await Tour.findByPk(id);
         if (!tour) {
             return res.status(404).json({ success: false, message: 'Tour not found' });
@@ -149,12 +148,12 @@ export const updateTour = async (req, res) => {
             duration, 
             departure_city, 
             transportations, 
-            tour_image, 
+            tour_images, 
             introduct_tour
         });
 
-        if (tour_children && Array.isArray(tour_children)) {
-            for (const child of tour_children) {
+        if (children && Array.isArray(children)) {
+            for (const child of children) {
                 if (!validateDate(child.start_date) || !validateDate(child.end_date)) {
                     throw new Error('Invalid date value in tour_children');
                 }
@@ -169,7 +168,7 @@ export const updateTour = async (req, res) => {
                         price_child: child.price_child,
                         total_seats: child.total_seats,
                         price_sale: child.price_sale,
-                        tour_code: generateTourCode(child.start_date), // Function to generate tour_code
+                        tour_code: generateTourCode(child.start_date), 
                     }
                 });
 
@@ -181,15 +180,25 @@ export const updateTour = async (req, res) => {
                         price_child: child.price_child,
                         total_seats: child.total_seats,
                         price_sale: child.price_sale,
-                        tour_code: generateTourCode(child.start_date), // Function to generate tour_code
+                        tour_code: generateTourCode(child.start_date), 
                     });
                 }
             }
         }
+        if(tour_images && Array.isArray(tour_images)){
+            const tourImagePromises = tour_images.map(tour_image => {
+                const imageUrl = `http://localhost:4000/images/tours/${tour_image.filename}`;
 
-        if (location_ids && Array.isArray(location_ids)) {
+                return TourImage.create({
+                    tour_id: id,
+                    image_url: imageUrl
+                }); 
+            })
+            await Promise.all(tourImagePromises)
+        }
+        if (locations && Array.isArray(locations)) {
             await TourLocation.destroy({ where: { tour_id: id } });
-            const tourLocationPromises = location_ids.map(location_id => {
+            const tourLocationPromises = locations.map(location_id => {
                 return TourLocation.create({
                     tour_id: id,
                     location_id: location_id
