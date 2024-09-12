@@ -1,20 +1,27 @@
 import jwt from 'jsonwebtoken'
 export const verifyToken = (req, res, next) => {
-    const token = req.cookies.accessToken
+    let token = req.cookies.accessToken; // Lấy token từ cookie
 
-    // Nếu token không tồn tại 
-    if (!token) {
-        return res.status(401).json({success:false, message:"You're not authorize"})
+    // Nếu không tìm thấy trong cookie, kiểm tra Authorization header
+    if (!token && req.headers.authorization) {
+        token = req.headers.authorization.split(' ')[1]; // Lấy token từ header
     }
-    //Sử dụng jwt.verify() để kiểm tra tính hợp lệ của token bằng khóa bí mật 
+
+    // Nếu không tìm thấy token ở cả cookie lẫn header
+    if (!token) {
+        return res.status(401).json({ success: false, message: "You're not authorized" });
+    }
+
+    // Sử dụng jwt.verify() để kiểm tra tính hợp lệ của token bằng khóa bí mật
     jwt.verify(token, process.env.JWT_SECRET_KEY, (err, user) => {
         if (err) {
-            return res.status(401).json({success:false, message:"Token is invalid"}) 
+            return res.status(401).json({ success: false, message: "Token is invalid" });
         }
-        req.user = user //  Gán thông tin người dùng (từ token) vào đối tượng yêu cầu (req) để các phần khác của ứng dụng có thể truy cập.
-        next()  // là một hàm được truyền vào middleware và có nhiệm vụ gọi middleware kế tiếp trong chuỗi xử lý yêu cầu.
-    })
-}
+        req.user = user; // Gán thông tin người dùng từ token vào req
+        next(); // Tiếp tục tới middleware tiếp theo
+    });
+};
+
 
 export const verifyUser = (req, res, next) => {
     verifyToken(req, res, next, () => {

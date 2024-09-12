@@ -27,14 +27,13 @@ export const login = async (req, res) => {
     const email = req.body.email
     try {
         const user = await User.findOne({ where: {email} })
-        // Nếu user không tồn tại
+
         if (!user) {
             return res.status(404).json({success:false, message:'User not found'})
         }
-        // kiểm tra password 
+ 
         const checkCorrectPassword = await bcrypt.compare(req.body.password, user.password)
 
-        // Nếu password không đúng
         if (!checkCorrectPassword) {
             return res.status(401).json({success:false, message:'Incorrect email or password'})
         }
@@ -48,12 +47,27 @@ export const login = async (req, res) => {
         // jwt.sign(): Đây là hàm của thư viện jsonwebtoken dùng để tạo ra một token JWT token này sẽ chưa thông tin của id và role
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET_KEY, { expiresIn: "15d" });
         
-        // set token in the browser cookies and send the response to the client
-        res.cookie('accessToken', token, {
-            httpOnly: true, // httpOnly, nghĩa là nó chỉ có thể được truy cập bởi server-side scripts, không thể truy cập bằng JavaScript từ phía client
-            expires: token.expiresIn
-        }).status(200).json({success: true, message: 'successfully login', token, role,  data: {... rest}})
+
+        res.status(200).json({
+            success: true,
+            message: 'Successfully logged in',
+            token, 
+            role,
+            data: { ...rest } 
+        });
     } catch (error) {
         return res.status(500).json({success:false, message:'Failed to login'})
+    }
+}
+export const user = async (req, res) => {
+    const id  = req.user.id
+    try {
+        const user = await User.findByPk(id); 
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json({ data: user });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching user data' });
     }
 }
