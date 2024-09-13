@@ -1,8 +1,34 @@
 import User from "../models/User.js";
-import bcrypt from 'bcryptjs'
+import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import validator from "validator";
 
+export const login = async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ success: false, message: 'Vui lòng nhập đầy đủ email và mật khẩu.' });
+    }
+
+    if (!validator.isEmail(email)) {
+        return res.status(400).json({ success: false, message: 'Email không hợp lệ.' });
+    }
+    try {
+        const user = await User.findOne({ where: { email } })
+        if (!user) {
+            return res.status(404).json({success:false, message:'Email không tồn tại'})
+        }
+ 
+        const checkCorrectPassword = await bcrypt.compare(password, user.password)
+
+        if (!checkCorrectPassword) {
+            return res.status(401).json({success:false, message:'Email hoặc Password không chính xác. Vui lòng thử lại!'})
+        }
+        const token  = createToken(user.id)
+        return res.json({success:true, token})
+    } catch (error) {
+        return res.status(500).json({success:false, message:'Đăng nhập thất bại. Vui lòng thử lại!'})
+    }
+}
 export const register = async (req, res) => {
     const {username, email, password, phone, address, confirmPassword, role} = req.body
     try {
@@ -37,43 +63,8 @@ export const register = async (req, res) => {
     }
 }
 
-
-export const login = async (req, res) => {
-    const { email, password } = req.body;
-    if (!email || !password) {
-        return res.status(400).json({ success: false, message: 'Vui lòng nhập đầy đủ email và mật khẩu.' });
-    }
-
-    if (!validator.isEmail(email)) {
-        return res.status(400).json({ success: false, message: 'Email không hợp lệ.' });
-    }
-    try {
-        const user = await User.findOne({ where: {email} })
-        if (!user) {
-            return res.status(404).json({success:false, message:'Email không tồn tại'})
-        }
- 
-        const checkCorrectPassword = await bcrypt.compare(req.body.password, user.password)
-
-        if (!checkCorrectPassword) {
-            return res.status(401).json({success:false, message:'Email hoặc Password không chính xác. Vui lòng thử lại!'})
-        }
-
-        const {password, role, ...rest} = user.dataValues
-
-        const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET_KEY, { expiresIn: "15d" });
-        
-
-        res.status(200).json({
-            success: true,
-            message: 'Đăng nhập thành công',
-            token, 
-            role,
-            data: { ...rest } 
-        });
-    } catch (error) {
-        return res.status(500).json({success:false, message:'Đăng nhập thất bại. Vui lòng thử lại!'})
-    }
+const createToken = (id) => {
+    return jwt.sign({ id }, process.env.JWT_SECRET_KEY)
 }
 export const user = async (req, res) => {
     const id  = req.user.id
