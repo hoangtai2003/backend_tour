@@ -377,6 +377,16 @@ export const getRelatedTours = async (req, res) => {
                     },
                     attributes: ['id', 'name'],
                     through: { attributes: [] }  // Bỏ qua các cột trung gian của bảng TourLocation
+                },
+                {
+                    model: TourChild,
+                    as: 'tourChildren',
+                    attributes: ['id', 'tour_code', 'start_date', 'end_date', 'price_adult', 'price_child', 'total_seats', 'price_sale']
+                },
+                {
+                    model: TourImage,
+                    as:'tourImage',
+                    attributes: ['image_url']
                 }
             ],
             where: {

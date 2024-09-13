@@ -1,62 +1,78 @@
 import User from "../models/User.js";
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-//user registration
-export const register = async (req, res) => {
-    try {
-        const salt = bcrypt.genSaltSync(10)
-        const hash = bcrypt.hashSync(req.body.password, salt)
-        
-        const newUser = await User.create({
-            username: req.body.username,
-            email: req.body.email,
-            password: hash,
-            photo: req.body.photo
-        })
+import validator from "validator";
 
+export const register = async (req, res) => {
+    const {username, email, password, phone, address, confirmPassword, role} = req.body
+    try {
+        const emailExist = await User.findOne({ where: {email} })
+        if (!username || !email || !password || !phone || !address || !confirmPassword) {
+            return res.status(400).json({ success: false, message: 'Vui lòng nhập đầy đủ thông tin' });
+        }
+        if (password != confirmPassword){
+            return res.json({success:false, message:'Mật khẩu và xác nhận mật khẩu không chính xác'})
+        }
+
+        if (emailExist){
+            return res.json({success:false, message:'Email đã tồn tại trong hệ thống'})
+        }
+        if (!validator.isEmail(email)){
+            return res.json({success:false, message:'Email không hợp lệ'})
+        }
+        const salt = bcrypt.genSaltSync(10)
+        const hash = bcrypt.hashSync(password, salt)
+        const newUser = await User.create({
+            username: username,
+            email: email,
+            phone: phone,
+            address: address,
+            password: hash,
+            role
+        })
         await newUser.save()
-        res.status(200).json({success:true, message:'Successfully created'})
+        res.status(200).json({success:true, message:'Đăng ký thành công'})
     } catch (error) {
-        res.status(500).json({success:false, message:'Failed to create. Try again'})
+        res.status(500).json({success:false, message:'Đăng ký không thành công. Vui lòng thử lại'})
     }
 }
 
-// user login
 
 export const login = async (req, res) => {
-    const email = req.body.email
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ success: false, message: 'Vui lòng nhập đầy đủ email và mật khẩu.' });
+    }
+
+    if (!validator.isEmail(email)) {
+        return res.status(400).json({ success: false, message: 'Email không hợp lệ.' });
+    }
     try {
         const user = await User.findOne({ where: {email} })
-
         if (!user) {
-            return res.status(404).json({success:false, message:'User not found'})
+            return res.status(404).json({success:false, message:'Email không tồn tại'})
         }
  
         const checkCorrectPassword = await bcrypt.compare(req.body.password, user.password)
 
         if (!checkCorrectPassword) {
-            return res.status(401).json({success:false, message:'Incorrect email or password'})
+            return res.status(401).json({success:false, message:'Email hoặc Password không chính xác. Vui lòng thử lại!'})
         }
 
-        // Destructuring assignment (gán phân rã): tách password và role
-        // user._doc: truy vấn database và nhận được đối đối tượng user, các trường của user sẽ được lưu trong _doc
-        // ... rest: sẽ chứa các giá trị còn lại của đối tượng user
         const {password, role, ...rest} = user.dataValues
 
-        // create jwt token
-        // jwt.sign(): Đây là hàm của thư viện jsonwebtoken dùng để tạo ra một token JWT token này sẽ chưa thông tin của id và role
         const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET_KEY, { expiresIn: "15d" });
         
 
         res.status(200).json({
             success: true,
-            message: 'Successfully logged in',
+            message: 'Đăng nhập thành công',
             token, 
             role,
             data: { ...rest } 
         });
     } catch (error) {
-        return res.status(500).json({success:false, message:'Failed to login'})
+        return res.status(500).json({success:false, message:'Đăng nhập thất bại. Vui lòng thử lại!'})
     }
 }
 export const user = async (req, res) => {
