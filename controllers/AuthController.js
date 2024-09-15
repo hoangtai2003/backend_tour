@@ -64,7 +64,7 @@ export const register = async (req, res) => {
 }
 
 const createToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET_KEY)
+    return jwt.sign({ id }, process.env.JWT_SECRET_KEY, {expiresIn: "1d"})
 }
 export const user = async (req, res) => {
     const id  = req.user.id
