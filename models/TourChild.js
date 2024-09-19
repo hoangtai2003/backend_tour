@@ -40,6 +40,38 @@ const TourChild = sequelize.define('TourChild', {
     price_sale: {
         type: DataTypes.INTEGER
     },
+    price_toddler: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    price_baby: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    transportion_start: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    transportion_end: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    time_goes_start: {
+        type: DataTypes.TIME,
+        allowNull: false
+    },
+    time_comes_start: {
+        type: DataTypes.TIME,
+        allowNull: false
+    },
+    time_goes_end: {
+        type: DataTypes.TIME,
+        allowNull: false
+    },
+    time_comes_end: {
+        type: DataTypes.TIME,
+        allowNull: false
+    },
     total_seats: {
         type: DataTypes.INTEGER,
         allowNull: false

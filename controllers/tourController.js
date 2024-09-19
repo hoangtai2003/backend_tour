@@ -12,7 +12,6 @@ export const createTour = async (req, res) => {
         price, 
         duration, 
         departure_city, 
-        transportations,
         introduct_tour, 
         location_ids,
         tour_children
@@ -39,15 +38,6 @@ export const createTour = async (req, res) => {
                 }
             }
         }
-
-        // Generate tour code
-        const tourCodePrefix = "NDSGN";
-        const uniqueId = Math.floor(Math.random() * 1000).toString().padStart(3, '0'); 
-        const startDate = new Date(children && children[0] && children[0].start_date);
-        const formattedDate = startDate.toISOString().slice(2, 10).replace(/-/g, ''); 
-        const tourCodeSuffix = uuidv4().slice(0, 2).toUpperCase(); 
-        const tour_code = `${tourCodePrefix}${uniqueId}-${formattedDate}${tourCodeSuffix}-H`;
-
         // Create tour
         const newTour = await Tour.create({
             name, 
@@ -55,9 +45,7 @@ export const createTour = async (req, res) => {
             price, 
             duration, 
             departure_city, 
-            transportations, 
             introduct_tour,
-            tour_code
         });
 
         // Create tour children
@@ -65,6 +53,7 @@ export const createTour = async (req, res) => {
             const tourChildPromises = children.map(child => {
                 return TourChild.create({
                     tour_id: newTour.id,
+                    tour_code: generateTourCode(child.start_date), 
                     ...child
                 });
             });
@@ -123,7 +112,6 @@ export const updateTour = async (req, res) => {
         price, 
         duration, 
         departure_city, 
-        transportations, 
         introduct_tour, 
         location_ids,
         tour_children
@@ -148,7 +136,6 @@ export const updateTour = async (req, res) => {
             price, 
             duration, 
             departure_city, 
-            transportations, 
             tour_images, 
             introduct_tour
         });
@@ -169,6 +156,14 @@ export const updateTour = async (req, res) => {
                         price_child: child.price_child,
                         total_seats: child.total_seats,
                         price_sale: child.price_sale,
+                        price_toddler: child.price_toddler,
+                        price_baby: child.price_baby,
+                        transportion_start: child.transportion_start,
+                        transportion_end: child.transportion_end,
+                        time_goes_start: child.time_goes_start,
+                        time_comes_start: child.time_comes_start,
+                        time_goes_end: child.time_goes_end,
+                        time_comes_end: child.time_comes_end,
                         tour_code: generateTourCode(child.start_date), 
                     }
                 });
@@ -181,6 +176,14 @@ export const updateTour = async (req, res) => {
                         price_child: child.price_child,
                         total_seats: child.total_seats,
                         price_sale: child.price_sale,
+                        price_toddler: child.price_toddler,
+                        price_baby: child.price_baby,
+                        transportion_start: child.transportion_start,
+                        transportion_end: child.transportion_end,
+                        time_goes_start: child.time_goes_start,
+                        time_comes_start: child.time_comes_start,
+                        time_goes_end: child.time_goes_end,
+                        time_comes_end: child.time_comes_end,
                         tour_code: generateTourCode(child.start_date), 
                     });
                 }
@@ -275,7 +278,25 @@ export const getSingleTour = async (req, res) => {
                 {
                     model: TourChild,
                     as: 'tourChildren',
-                    attributes: ['id', 'tour_code', 'start_date', 'end_date', 'price_adult', 'price_child', 'total_seats', 'price_sale']
+                    attributes: 
+                    [
+                        'id', 
+                        'tour_code', 
+                        'start_date', 
+                        'end_date', 
+                        'price_adult', 
+                        'price_child', 
+                        'total_seats', 
+                        'price_sale',
+                        'price_toddler',
+                        'price_baby',
+                        'transportion_start',
+                        'transportion_end',
+                        'time_goes_start',
+                        'time_comes_start',
+                        'time_goes_end',
+                        'time_comes_end'
+                    ]
                 },
                 {
                     model: Location,
@@ -315,7 +336,25 @@ export const getAllTour = async (req, res) => {
                     {
                         model: TourChild,
                         as: 'tourChildren',
-                        attributes: ['id', 'tour_code', 'start_date', 'end_date', 'price_adult', 'price_child', 'total_seats', 'price_sale']
+                        attributes: 
+                        [
+                            'id', 
+                            'tour_code', 
+                            'start_date', 
+                            'end_date', 
+                            'price_adult', 
+                            'price_child', 
+                            'total_seats', 
+                            'price_sale',
+                            'price_toddler',
+                            'price_baby',
+                            'transportion_start',
+                            'transportion_end',
+                            'time_goes_start',
+                            'time_comes_start',
+                            'time_goes_end',
+                            'time_comes_end'
+                        ]
                     },
                     {
                         model: Location,
@@ -381,7 +420,25 @@ export const getRelatedTours = async (req, res) => {
                 {
                     model: TourChild,
                     as: 'tourChildren',
-                    attributes: ['id', 'tour_code', 'start_date', 'end_date', 'price_adult', 'price_child', 'total_seats', 'price_sale']
+                    attributes: 
+                    [
+                        'id', 
+                        'tour_code', 
+                        'start_date', 
+                        'end_date', 
+                        'price_adult', 
+                        'price_child', 
+                        'total_seats', 
+                        'price_sale',
+                        'price_toddler',
+                        'price_baby',
+                        'transportion_start',
+                        'transportion_end',
+                        'time_goes_start',
+                        'time_comes_start',
+                        'time_goes_end',
+                        'time_comes_end'
+                    ]
                 },
                 {
                     model: TourImage,

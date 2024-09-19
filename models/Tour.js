@@ -35,10 +35,6 @@ const Tour = sequelize.define('Tour',{
         type: DataTypes.STRING,
         allowNull: false,  
     },
-    transportations: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
 },
     { 
         timestamps: true,
