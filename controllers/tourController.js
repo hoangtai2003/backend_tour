@@ -270,7 +270,7 @@ export const deleteTour = async (req, res) => {
 
 // get single tour
 export const getSingleTour = async (req, res) => {
-    const id = req.params.id
+    const { id } = req.params
     try {
         const tour = await Tour.findByPk(id, {
             include: 
@@ -281,6 +281,7 @@ export const getSingleTour = async (req, res) => {
                     attributes: 
                     [
                         'id', 
+                        "tour_id",
                         'tour_code', 
                         'start_date', 
                         'end_date', 
@@ -465,6 +466,53 @@ export const getRelatedTours = async (req, res) => {
     }
 };
 
+export const getTourByTourCode = async (req, res) => {
+    const { tourCode } = req.params;
+
+    try {
+        const tourChild = await TourChild.findOne({
+            where: { tour_code: tourCode }, 
+            include: [
+                {
+                    model: Tour, 
+                    as: 'tour',
+                    include: [
+                        {
+                            model: Location,
+                            as: 'locations',
+                            through: { attributes: ['location_id'] }, 
+                            attributes: ['name']
+                        },
+                        {
+                            model: TourImage, 
+                            as: 'tourImage',
+                            attributes: ['image_url'], 
+                        },
+                    ],
+                },
+            ],
+        });
+
+        if (!tourChild) {
+            return res.status(404).json({
+                success: false,
+                message: "Tour not found",
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Successfully retrieved tour",
+            data: tourChild,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to retrieve tour",
+        });
+    }
+};
 
 // get tour by search
 export const getTourBySearch = async (req, res) => {
