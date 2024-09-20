@@ -2,7 +2,7 @@ import Booking from "../models/Booking.js"
 import Passenger from "../models/Passenger.js";
 import TourChild from "../models/TourChild.js";
 import User from "../models/User.js";
-
+import Tour from "../models/Tour.js";
 export const createBooking = async (req, res) => {
     const {
         tour_child_id,
@@ -69,32 +69,100 @@ export const createBooking = async (req, res) => {
         });
     }
 };
-export const updateStatusBooking = async(req, res) => {
-    const { id } = req.params
-    const { status } = req.body
+export const updateStatusBooking = async (req, res) => {
+    const { id } = req.params;  
+    const { status } = req.body; 
+
     try {
-        const updateStatus = await Booking.findByPk(id)
-        await updateStatus.update({ status })
-        res.status(200).json({success:true, message:'Update status successfully'})
+        const booking = await Booking.findByPk(id);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        await booking.update({ status });
+        res.status(200).json({ success: true, message: 'Update status successfully' });
     } catch (error) {
-        res.status(500).json({success:false, error, message:'Failed to update status. Try again'})
+        res.status(500).json({ success: false, error, message: 'Failed to update status. Try again' });
     }
-}
+};
 
 export const getBooking = async(req, res) => {
-    const id = req.params.id
+    const { id } = req.params
     try {
-        const book = await Booking.findById(id)
-        res.status(200).json({success:true, message: "Successfully", data: book})
+        const booking = await Booking.findByPk(id, {
+            include: [
+                {
+                    model: TourChild,
+                    as: 'bookingTourChild',
+                    attributes: ['tour_id', 'tour_code', 'price_adult', 'price_child', 'price_toddler', 'price_baby'],
+                    include: [
+                        {
+                            model: Tour,
+                            as : "tour",
+                            attributes: ['name', 'departure_city', 'duration']
+                        }
+                    ]
+                }, 
+                {
+                    model: User,
+                    as: 'bookingUser',
+                    attributes: ['username', 'email', 'phone', 'address']
+                },
+                {
+                    model: Passenger,
+                    as: 'bookingPassenger',
+                    attributes: ['booking_id', 'passenger_name', 'passenger_dateOfBirthday', 'passenger_gender']
+                }
+            ]
+        })
+        res.status(200).json({success:true, message: "Successfully", data: booking})
     } catch (error) {
         res.status(500).json({success:false, message:'Not Found'})
     }
 }
 
 export const getAllBooking = async(req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 8
+    const offset = (page - 1) * limit
     try {
-        const book = await Booking.find({})
-        res.status(200).json({success:true, message: "Successfully", data: book})
+        const { count, rows } = await Booking.findAndCountAll({
+            limit, 
+            offset,
+            distinct: true,
+            include: [
+                {
+                    model: TourChild,
+                    as: 'bookingTourChild',
+                    attributes: ['tour_id', 'tour_code', 'price_adult', 'price_child', 'price_toddler', 'price_baby'],
+                    include: [
+                        {
+                            model: Tour,
+                            as : "tour",
+                            attributes: ['name', 'departure_city', 'duration']
+                        }
+                    ]
+                }, 
+                {
+                    model: User,
+                    as: 'bookingUser',
+                    attributes: ['username', 'email', 'phone', 'address']
+                },
+                {
+                    model: Passenger,
+                    as: 'bookingPassenger',
+                    attributes: ['booking_id', 'passenger_name', 'passenger_dateOfBirthday', 'passenger_gender']
+                }
+            ]
+        })
+        res.status(200).json({
+            success: true,
+            count: count, 
+            totalPages: Math.ceil(count / limit), 
+            currentPage: page, 
+            message: "Successfully retrieved tours",
+            data: rows    
+        });
     } catch (error) {
         res.status(500).json({success:false, message:'Not Found'})
     }

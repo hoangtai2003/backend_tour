@@ -379,7 +379,6 @@ export const getAllTour = async (req, res) => {
             data: rows    
         });
     } catch (err) {
-       
         res.status(500).json({ success: false, err, message: 'Failed to retrieve tours. Try again' });
     }
 };  
