@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../sequelize.js";
-import Tour from './Tour.js';
 import User from './User.js';
+import TourChild from "./TourChild.js";
 
 const Booking = sequelize.define('Booking', {
     id: {
@@ -9,36 +9,73 @@ const Booking = sequelize.define('Booking', {
         primaryKey: true,
         autoIncrement: true,
     },
-    tour_id: {
+    tour_child_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        references: {
+            model: TourChild,  
+            key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
     },
     user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        references: {
+            model: User,  
+            key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
     },
     booking_date: {
         type: DataTypes.DATE,
         allowNull: false,
         defaultValue: DataTypes.NOW,
     },
+    number_of_adults: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
+    number_of_children: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
+    number_of_toddler: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
+    number_of_baby: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
+    total_price: {
+        type: DataTypes.INTEGER,
+    },
     status: {
-        type: DataTypes.ENUM('pending', 'confirmed', 'canceled'),
+        type: DataTypes.ENUM('pending', 'confirmed', 'paid', 'completed', 'canceled'),
         allowNull: false,
         defaultValue: 'pending',
     },
-    payment_status: {
-        type: DataTypes.ENUM('paid', 'unpaid'),
-        allowNull: false,
-        defaultValue: 'unpaid',
+    booking_note: {
+        type: DataTypes.STRING
+    },
+    full_name: {
+        type: DataTypes.STRING
+    },
+    email: {
+        type: DataTypes.STRING
+    },
+    phone_number: {
+        type: DataTypes.STRING
+    },
+    address: {
+        type: DataTypes.STRING
     },
 }, {
+    tableName: 'booking',
     timestamps: true,
 });
 
-// Định nghĩa mối quan hệ với Tour
-Booking.belongsTo(User, {foreignKey: 'user_id', as:'category'})
-
-// Định nghĩa mối quan hệ với Location
-Booking.belongsTo(Tour, { foreignKey: 'tour_id', as: 'location' })
-export default Booking;
+export default Booking

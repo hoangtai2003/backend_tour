@@ -3,6 +3,9 @@ import TourChild from '../models/TourChild.js';
 import TourLocation from "../models/TourLocation.js";
 import Location from "../models/Location.js";
 import TourImage from "../models/TourImage.js";
+import User from "../models/User.js";
+import Booking from "../models/Booking.js";
+import Passenger from "../models/Passenger.js";
 
 
 // Relationship one to many between Tour and TourChild
@@ -19,3 +22,13 @@ TourLocation.belongsTo(Location, { foreignKey: 'location_id', as: 'location' });
 // Relationship one to many between Tour and TourImage
 Tour.hasMany(TourImage, {foreignKey: 'tour_id', as: 'tourImage'})
 TourImage.belongsTo(Tour, {foreignKey: 'tour_id', as: 'tour'})
+
+// Relationship users, booking, tour_child, passenger
+User.hasMany(Booking, {foreignKey: 'user_id', as: 'userBooking'})
+TourChild.hasMany(Booking, {foreignKey: 'tour_child_id', as: 'tourChildBooking'})
+
+Booking.belongsTo(User, {foreignKey: 'user_id', as: 'bookingUser'})
+Booking.belongsTo(TourChild, {foreignKey: 'tour_child_id', as: 'bookingTourChild'})
+
+Booking.hasMany(Passenger, {foreignKey: 'booking_id', as: 'bookingPassenger'})
+Passenger.belongsTo(Booking, {foreignKey: 'booking_id', as: 'passengerBooking'})
