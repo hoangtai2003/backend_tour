@@ -4,6 +4,7 @@ import TourChild from "../models/TourChild.js";
 import User from "../models/User.js";
 import Tour from "../models/Tour.js";
 import nodemailer from 'nodemailer'
+import TourImage from "../models/TourImage.js";
 export const createBooking = async (req, res) => {
     const {
         tour_child_id,
@@ -184,7 +185,6 @@ const sendStatusEmail = async (email, status, booking) => {
     const totalPrice = booking.total_price;
     const full_name = booking.full_name
     const totalPassenger = booking.number_of_adults + booking.number_of_children + booking.number_of_toddler + booking.number_of_baby
-    console.log(booking.number_of_adults)
     let subject, html;
     switch (status) {
         case 'Đã xác nhận': 
@@ -320,8 +320,15 @@ export const getAllBooking = async(req, res) => {
                         {
                             model: Tour,
                             as : "tour",
-                            attributes: ['name', 'departure_city', 'duration']
-                        }
+                            attributes: ['name', 'departure_city', 'duration'],
+                            include: [
+                                {
+                                    model: TourImage,
+                                    as: 'tourImage',
+                                    attributes: ['image_url']
+                                }
+                            ]
+                        },
                     ]
                 }, 
                 {

@@ -5,6 +5,8 @@ import TourLocation from '../models/TourLocation.js';
 import Location from '../models/Location.js';
 import TourImage from "../models/TourImage.js"
 import { Op, where } from 'sequelize';
+import Booking from '../models/Booking.js';
+import Sequelize from 'sequelize';
 export const createTour = async (req, res) => {
     const { 
         name, 
@@ -14,7 +16,8 @@ export const createTour = async (req, res) => {
         departure_city, 
         introduct_tour, 
         location_ids,
-        tour_children
+        tour_children,
+        program_code
     } = req.body;
 
    
@@ -46,6 +49,7 @@ export const createTour = async (req, res) => {
             duration, 
             departure_city, 
             introduct_tour,
+            program_code: generateProgramCode()
         });
 
         // Create tour children
@@ -235,7 +239,14 @@ const generateTourCode = (startDate) => {
     const tourCodeSuffix = uuidv4().slice(0, 2).toUpperCase();
     return `${tourCodePrefix}${uniqueId}-${formattedDate}${tourCodeSuffix}-H`;
 };
+const generateProgramCode = () => {
+    const randomNumbers = Array(3).fill().map(() => Math.floor(Math.random() * 10)).join('');
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const randomLetters = Array(5).fill().map(() => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+    const programCode =randomLetters + randomNumbers;
 
+    return programCode;
+};
 
 
 // delete tour
@@ -296,7 +307,17 @@ export const getSingleTour = async (req, res) => {
                         'time_goes_start',
                         'time_comes_start',
                         'time_goes_end',
-                        'time_comes_end'
+                        'time_comes_end',
+                        [
+                            Sequelize.literal(`(
+                                SELECT COUNT(*)
+                                FROM booking AS b
+                                WHERE 
+                                    b.tour_child_id = tourChildren.id
+                                    AND b.status = 'Đã thanh toán'
+                            )`),
+                            'confirmedBookingCount' 
+                        ]
                     ]
                 },
                 {
@@ -327,61 +348,79 @@ export const getAllTour = async (req, res) => {
     const offset = (page - 1) * limit;  
 
     try {
-     
         const { count, rows } = await Tour.findAndCountAll({
-            limit,    
-            offset,    
-            distinct: true,   
-            include: 
-                [
-                    {
-                        model: TourChild,
-                        as: 'tourChildren',
-                        attributes: 
+            limit,
+            offset,
+            distinct: true,
+            include: [
+                {
+                    model: TourChild,
+                    as: 'tourChildren',
+                    attributes: [
+                        'id', 
+                        'tour_code', 
+                        'start_date', 
+                        'end_date', 
+                        'price_adult', 
+                        'price_child', 
+                        'total_seats', 
+                        'price_sale',
+                        'price_toddler',
+                        'price_baby',
+                        'transportion_start',
+                        'transportion_end',
+                        'time_goes_start',
+                        'time_comes_start',
+                        'time_goes_end',
+                        'time_comes_end',
                         [
-                            'id', 
-                            'tour_code', 
-                            'start_date', 
-                            'end_date', 
-                            'price_adult', 
-                            'price_child', 
-                            'total_seats', 
-                            'price_sale',
-                            'price_toddler',
-                            'price_baby',
-                            'transportion_start',
-                            'transportion_end',
-                            'time_goes_start',
-                            'time_comes_start',
-                            'time_goes_end',
-                            'time_comes_end'
+                            Sequelize.literal(`(
+                                SELECT COUNT(*)
+                                FROM booking AS b
+                                WHERE 
+                                    b.tour_child_id = tourChildren.id
+                                    AND b.status = 'Đã thanh toán'
+                            )`),
+                            'confirmedBookingCount' 
                         ]
-                    },
-                    {
-                        model: Location,
-                        as: 'locations',
-                        through: { attributes: [] },  // Bỏ qua các cột trung gian từ bảng TourLocation
-                        attributes: ['name']
-                    },
-                    {
-                        model: TourImage,
-                        as:'tourImage',
-                        attributes: ['image_url']
-                    }
-                ] 
+                    ],
+                    include: [
+                        {
+                            model: Booking,
+                            as: 'tourChildBooking',
+                            attributes: ['status'],
+                        }
+                    ],
+                },
+                {
+                    model: Location,
+                    as: 'locations',
+                    through: { attributes: [] },
+                    attributes: ['name']
+                },
+                {
+                    model: TourImage,
+                    as: 'tourImage',
+                    attributes: ['image_url'],
+                }
+            ] 
         });
+
+        // Send the response
         res.status(200).json({
             success: true,
             count: count, 
             totalPages: Math.ceil(count / limit), 
             currentPage: page, 
             message: "Successfully retrieved tours",
-            data: rows    
+            data: rows,
         });
     } catch (err) {
+        console.log(err)
         res.status(500).json({ success: false, err, message: 'Failed to retrieve tours. Try again' });
     }
-};  
+};
+
 
 export const getRelatedTours = async (req, res) => {
     const tourId = req.params.id;
