@@ -3,6 +3,7 @@ import Passenger from "../models/Passenger.js";
 import TourChild from "../models/TourChild.js";
 import User from "../models/User.js";
 import Tour from "../models/Tour.js";
+import nodemailer from 'nodemailer'
 export const createBooking = async (req, res) => {
     const {
         tour_child_id,
@@ -17,13 +18,23 @@ export const createBooking = async (req, res) => {
         phone_number,
         address,
         booking_note,
-        booking_passenger
+        booking_passenger,
+        status
     } = req.body;
 
     try {
-        const tourChild  = await TourChild.findByPk(tour_child_id)
+        const tourChild  = await TourChild.findByPk(tour_child_id, {
+            attributes: ['start_date'],
+            include: [
+                {
+                    model: Tour,
+                    as: 'tour',
+                    attributes: ['name']
+                }
+            ]
+        })
         const user = await User.findByPk(user_id)
-
+        const totalPassenger = number_of_adults + number_of_children + number_of_toddler + number_of_baby
         if (!tourChild || !user) {
             return res.status(404).json({
                 success: false,
@@ -42,9 +53,23 @@ export const createBooking = async (req, res) => {
             email: email || user.email,
             phone_number: phone_number || user.phone,
             address: address || user.address,
-            booking_note
+            booking_note,
+            status,
+            booking_code: generateBookingCode()
         })
-
+        
+        const bookingDetails = {
+            full_name: newBooking.full_name,
+            bookingCode: newBooking.booking_code,
+            status: newBooking.status,
+            email: newBooking.email,
+            totalPrice: newBooking.total_price,
+            totalPassenger: totalPassenger,
+            totalPrice: newBooking.total_price,
+            tourName: tourChild.tour.name,
+            startDate: tourChild.start_date
+        }
+        await sendEmailHandleBooking(bookingDetails.email, bookingDetails.status, bookingDetails)
        // create passenger
         if (booking_passenger && Array.isArray(booking_passenger)){
             const bookingPassengerPromises = booking_passenger.map(passenger => {
@@ -55,11 +80,11 @@ export const createBooking = async (req, res) => {
             });
             await Promise.all(bookingPassengerPromises)
         }
-
         return res.status(201).json({
             success: true,
             message: 'Booking created successfully',
-            data: newBooking,
+            data: newBooking
+
         });
     } catch (error) {
         return res.status(500).json({
@@ -69,23 +94,255 @@ export const createBooking = async (req, res) => {
         });
     }
 };
+const generateBookingCode = () => {
+    const randomNumbers = Array(8).fill().map(() => Math.floor(Math.random() * 10)).join('');
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const randomLetters = Array(4).fill().map(() => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+    const bookingCode = randomNumbers + randomLetters;
+
+    return bookingCode;
+};
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+})
+const sendEmailHandleBooking = async (email, status, bookingDetails) => {
+    const tourName = bookingDetails.tourName;
+    const bookingCode = bookingDetails.bookingCode
+    const full_name = bookingDetails.full_name
+    const totalPassenger = bookingDetails.totalPassenger
+    const totalPrice = bookingDetails.totalPrice
+    const startDate = bookingDetails.startDate
+    let subject, html
+    switch (status) {
+        case 'Đang chờ xử lý':
+            subject = 'Tiếp nhận thông tin đặt Tour'
+            html = `
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <header style="background-color: #003366; color: #ffffff; padding: 20px; text-align: center;">
+                    <h1 style="margin: 0;">Tiếp nhận thông tin đặt tour</h1>
+                </header>
+                
+                <main style="padding: 20px;">
+                    <p style="font-size: 16px;">Kính gửi ${full_name},</p>
+                    
+                    <p style="font-size: 16px;">Cảm ơn bạn đã quan tâm đến dịch vụ tour du lịch của Du lịch Việt. Chúng tôi xin xác nhận đã nhận được yêu cầu đặt tour của bạn.</p>
+                    
+                    <h2 style="color: #003366; border-bottom: 2px solid #003366; padding-bottom: 10px;">Thông tin đặt tour:</h2>
+                    <ul style="list-style-type: none; padding-left: 0;">
+                        <li style="margin-bottom: 10px;"><strong>Mã đặt tour: ${bookingCode}</strong> </li>
+                        <li style="margin-bottom: 10px;"><strong>Tên tour: ${tourName}</strong> </li>
+                        <li style="margin-bottom: 10px;"><strong>Ngày khởi hành dự kiến: ${startDate}</strong></li>
+                        <li style="margin-bottom: 10px;"><strong>Số lượng người: ${totalPassenger}</strong> </li>
+                        <li style="margin-bottom: 10px;"><strong>Tổng chi phí dự kiến:</strong>  ${totalPrice.toLocaleString('vi-VN')} VND</li>
+                    </ul>
+                    
+                    <div style="background-color: #f0f0f0; border-left: 4px solid #003366; padding: 15px; margin: 20px 0;">
+                        <h3 style="color: #003366; margin-top: 0;">Trạng thái đơn đặt tour: Đang chờ xử lý</h3>
+                        <p style="margin-bottom: 0;">Yêu cầu đặt tour của bạn hiện đang được xem xét và xử lý. Chúng tôi đang kiểm tra tình trạng còn chỗ và các yêu cầu đặc biệt (nếu có) của bạn.</p>
+                    </div>
+                    
+                    <h2 style="color: #003366; border-bottom: 2px solid #003366; padding-bottom: 10px;">Các bước tiếp theo:</h2>
+                    <ol style="padding-left: 20px;">
+                        <li style="margin-bottom: 10px;">Chúng tôi sẽ xem xét yêu cầu của bạn trong thời gian làm việc.</li>
+                        <li style="margin-bottom: 10px;">Sau khi xác nhận tình trạng còn chỗ, chúng tôi sẽ gửi cho bạn một email xác nhận kèm theo hướng dẫn thanh toán.</li>
+                        <li style="margin-bottom: 10px;">Để đảm bảo giữ chỗ, vui lòng chờ email xác nhận từ chúng tôi trước khi thực hiện bất kỳ khoản thanh toán nào.</li>
+                        <li style="margin-bottom: 10px;">Nếu bạn có bất kỳ thay đổi hoặc câu hỏi nào trong thời gian chờ đợi, xin đừng ngần ngại liên hệ với chúng tôi.</li>
+                    </ol>
+                    
+                    <p style="font-size: 16px;">Chúng tôi đánh giá cao sự kiên nhẫn của bạn trong quá trình này và sẽ cố gắng xử lý yêu cầu của bạn một cách nhanh chóng nhất có thể.</p>
+                    
+                    <div style="background-color: #e6f3ff; border: 1px solid #003366; padding: 15px; margin: 20px 0;">
+                        <h3 style="color: #003366; margin-top: 0;">Thông tin liên hệ:</h3>
+                        <p style="margin-bottom: 5px;">Điện thoại: (+84) 886 008 377</p>
+                        <p style="margin-bottom: 0;">Email: Hdt13102k3@gmail.com</p>
+                    </div>
+                </main>
+                
+                <footer style="background-color: #003366; color: #ffffff; padding: 20px; text-align: center; font-size: 14px;">
+                    <p style="margin: 0;">Trân trọng,</p>
+                    <p style="margin: 5px 0 0;">Hoàng Đức Tài</p>
+                </footer>
+            </body>
+        `
+        break
+    }
+    await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject,
+        html
+    })
+}
+const sendStatusEmail = async (email, status, booking) => {
+    const bookingCode = booking.booking_code;
+    const tourName = booking.bookingTourChild.tour.name
+    const startDate = booking.bookingTourChild.start_date;
+    const totalPrice = booking.total_price;
+    const full_name = booking.full_name
+    const totalPassenger = booking.number_of_adults + booking.number_of_children + booking.number_of_toddler + booking.number_of_baby
+    console.log(booking.number_of_adults)
+    let subject, html;
+    switch (status) {
+        case 'Đã xác nhận': 
+            subject = 'Xác nhận đặt tour';
+            html = `
+               <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <header style="background-color: #003366; color: #ffffff; padding: 20px; text-align: center;">
+                        <h1 style="margin: 0;">Xác nhận đặt tour</h1>
+                    </header>
+                    
+                    <main style="padding: 20px;">
+                        <p style="font-size: 16px;">Kính gửi, ${full_name}</p>
+                        
+                        <p style="font-size: 16px;">Chúc mừng bạn! Đơn đặt tour của bạn đã được xác nhận thành công. Cảm ơn bạn đã tin tưởng lựa chọn dịch vụ của Du lịch Việt.</p>
+                        
+                        <h2 style="color: #003366; border-bottom: 2px solid #003366; padding-bottom: 10px;">Thông tin đặt tour:</h2>
+                        <ul style="list-style-type: none; padding-left: 0;">
+                            <li style="margin-bottom: 10px;"><strong>Mã đặt tour:</strong> ${bookingCode}</li>
+                            <li style="margin-bottom: 10px;"><strong>Tên tour: ${tourName}</strong> </li>
+                            <li style="margin-bottom: 10px;"><strong>Ngày khởi hành dự kiến:</strong> ${startDate}</li>
+                            <li style="margin-bottom: 10px;"><strong>Số lượng người:</strong> ${totalPassenger}</li>
+                            <li style="margin-bottom: 10px;"><strong>Tổng chi phí:</strong> ${totalPrice.toLocaleString('vi-VN')} VND</li>
+                             <li style="margin-bottom: 10px;"><strong>Số tiền cần phải thanh toán:</strong> ${totalPrice.toLocaleString('vi-VN')} VND</li>
+                        </ul>
+                        <p style="font-size: 16px;"></p>
+                        <div style="background-color: #f0f0f0; border-left: 4px solid #003366; padding: 15px; margin: 20px 0;">
+                            <h3 style="color: #003366; margin-top: 0;">Trạng thái đơn đặt tour: Đã xác nhận</h3>
+                            <p style="font-size: 16px;">Dưới đây là thông tin tài khoản của chúng tôi:</p>
+                            <ul style="list-style-type: none; padding-left: 0;">
+                                <li style="margin-bottom: 10px;"><strong>Ngân hàng: </strong> MBBANK: MB NGÂN HÀNG QUÂN ĐỘI</li>
+                                <li style="margin-bottom: 10px;"><strong>Số tài khoản: 0814003469999</strong> </li>
+                                <li style="margin-bottom: 10px;"><strong>Chủ tài khoản: HOANG DUC TAI</strong></li>
+                            </ul>
+                            <p style="font-size: 16px; color: red;">Lưu ý *: Vui lòng thanh toán trước ngày ... để đảm bảo giữ chỗ của bạn.</p>
+                        </div>
+                        
+                        <h2 style="color: #003366; border-bottom: 2px solid #003366; padding-bottom: 10px;">Các bước tiếp theo:</h2>
+                        <ol style="padding-left: 20px;">
+                            <li style="margin-bottom: 10px;">Chúng tôi sẽ xem xét yêu cầu của bạn trong thời gian làm việc.</li>
+                            <li style="margin-bottom: 10px;">Sau khi xác nhận thanh toán, chúng tôi sẽ gửi cho bạn một email xác nhận kèm theo hướng dẫn chi tiết về chuyến đi này.</li>
+                            <li style="margin-bottom: 10px;">Nếu bạn có bất kỳ thay đổi hoặc câu hỏi nào trong thời gian chờ đợi, xin đừng ngần ngại liên hệ với chúng tôi.</li>
+                        </ol>
+                        
+                        <p style="font-size: 16px;">Chúng tôi đánh giá cao sự kiên nhẫn của bạn trong quá trình này và sẽ cố gắng xử lý yêu cầu của bạn một cách nhanh chóng nhất có thể.</p>
+                        
+                        <div style="background-color: #e6f3ff; border: 1px solid #003366; padding: 15px; margin: 20px 0;">
+                            <h3 style="color: #003366; margin-top: 0;">Thông tin liên hệ:</h3>
+                        <p style="margin-bottom: 5px;">Điện thoại: (+84) 886 008 377</p>
+                        <p style="margin-bottom: 0;">Email: Hdt13102k3@gmail.com</p>
+                        </div>
+                    </main>
+                        
+                    <footer style="background-color: #003366; color: #ffffff; padding: 20px; text-align: center; font-size: 14px;">
+                        <p style="margin: 0;">Trân trọng,</p>
+                        <p style="margin: 5px 0 0;">Hoàng Đức Tài</p>
+                    </footer>   
+                </body>
+
+            `
+            break;
+        case 'Đã thanh toán': 
+            subject = 'Xác nhận thanh toán';
+            html = 'Chúng tôi đã nhận được thanh toán của bạn. Xin cảm ơn!';
+            break;
+        case 'Hủy bỏ':
+            subject = 'Hủy bỏ đặt tour';
+            html = 'Tour của bạn đã bị hủy bỏ. Nếu có thắc mắc, vui lòng liên hệ với chúng tôi.';
+            break;
+        default: 
+            subject = 'Cập nhật trạng thái tour';
+            html = `Trạng thái tour của bạn đã được cập nhật thành: ${status}`;
+            break;
+    }
+
+    await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject,
+        html
+    })
+}
 export const updateStatusBooking = async (req, res) => {
     const { id } = req.params;  
     const { status } = req.body; 
-
     try {
-        const booking = await Booking.findByPk(id);
+        const booking = await Booking.findByPk(id, {
+            include: [
+                {
+                    model: TourChild,
+                    as: 'bookingTourChild',
+                    attributes: ['start_date', 'end_date'],
+                    include: [
+                        {
+                            model: Tour,
+                            as : "tour",
+                            attributes: ['name']
+                        }
+                    ]
+                },
+            ]
+        });
+
         if (!booking) {
             return res.status(404).json({ success: false, message: 'Booking not found' });
         }
 
         await booking.update({ status });
+        
+        await sendStatusEmail(booking.email, status, booking)
+
         res.status(200).json({ success: true, message: 'Update status successfully' });
     } catch (error) {
+        console.error('Error updating booking status:', error);
         res.status(500).json({ success: false, error, message: 'Failed to update status. Try again' });
     }
 };
-
+export const getAllBooking = async(req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 8
+    const offset = (page - 1) * limit
+    try {
+        const { count, rows } = await Booking.findAndCountAll({
+            limit, 
+            offset,
+            distinct: true,
+            order: [['id', 'DESC']], 
+            include: [
+                {
+                    model: TourChild,
+                    as: 'bookingTourChild',
+                    attributes: ['tour_id', 'tour_code', 'price_adult', 'price_child', 'price_toddler', 'price_baby'],
+                    include: [
+                        {
+                            model: Tour,
+                            as : "tour",
+                            attributes: ['name', 'departure_city', 'duration']
+                        }
+                    ]
+                }, 
+                {
+                    model: Passenger,
+                    as: 'bookingPassenger',
+                    attributes: ['booking_id', 'passenger_name', 'passenger_dateOfBirthday', 'passenger_gender']
+                }
+            ]
+        })
+        res.status(200).json({
+            success: true,
+            count: count, 
+            totalPages: Math.ceil(count / limit), 
+            currentPage: page, 
+            message: "Successfully retrieved tours",
+            data: rows    
+        });
+    } catch (error) {
+        res.status(500).json({success:false, message:'Not Found'})
+    }
+}
 export const getBooking = async(req, res) => {
     const { id } = req.params
     try {
@@ -104,11 +361,6 @@ export const getBooking = async(req, res) => {
                     ]
                 }, 
                 {
-                    model: User,
-                    as: 'bookingUser',
-                    attributes: ['username', 'email', 'phone', 'address']
-                },
-                {
                     model: Passenger,
                     as: 'bookingPassenger',
                     attributes: ['booking_id', 'passenger_name', 'passenger_dateOfBirthday', 'passenger_gender']
@@ -116,53 +368,6 @@ export const getBooking = async(req, res) => {
             ]
         })
         res.status(200).json({success:true, message: "Successfully", data: booking})
-    } catch (error) {
-        res.status(500).json({success:false, message:'Not Found'})
-    }
-}
-
-export const getAllBooking = async(req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = 8
-    const offset = (page - 1) * limit
-    try {
-        const { count, rows } = await Booking.findAndCountAll({
-            limit, 
-            offset,
-            distinct: true,
-            include: [
-                {
-                    model: TourChild,
-                    as: 'bookingTourChild',
-                    attributes: ['tour_id', 'tour_code', 'price_adult', 'price_child', 'price_toddler', 'price_baby'],
-                    include: [
-                        {
-                            model: Tour,
-                            as : "tour",
-                            attributes: ['name', 'departure_city', 'duration']
-                        }
-                    ]
-                }, 
-                {
-                    model: User,
-                    as: 'bookingUser',
-                    attributes: ['username', 'email', 'phone', 'address']
-                },
-                {
-                    model: Passenger,
-                    as: 'bookingPassenger',
-                    attributes: ['booking_id', 'passenger_name', 'passenger_dateOfBirthday', 'passenger_gender']
-                }
-            ]
-        })
-        res.status(200).json({
-            success: true,
-            count: count, 
-            totalPages: Math.ceil(count / limit), 
-            currentPage: page, 
-            message: "Successfully retrieved tours",
-            data: rows    
-        });
     } catch (error) {
         res.status(500).json({success:false, message:'Not Found'})
     }
