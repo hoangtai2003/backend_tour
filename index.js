@@ -4,6 +4,8 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import sequelize from './sequelize.js';
 import './relationship/associations.js';
+import passport from 'passport';
+import session from 'express-session'
 
 import tourRoute from './routes/tours.js'
 import userRoute from './routes/users.js'
@@ -22,6 +24,8 @@ const corsOption = {
     credentials: true 
 }
 
+
+
 //database connection
 sequelize.authenticate()
     .then(() => console.log('MySQL database connected'))
@@ -34,6 +38,15 @@ app.use(cors(corsOption))
 app.use(cookieParser()) 
 app.use('/images/tours', express.static('images/tours'));
 
+// Google OAuth
+app.use(session({
+    secret: 'some secret key',
+    resave: false,
+    saveUninitialized: true
+  }));
+  
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use('/api/v1/auth', authRoute)
 app.use('/api/v1/tours', tourRoute)

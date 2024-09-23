@@ -2,7 +2,8 @@ import User from "../models/User.js";
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import validator from "validator";
-
+import passport from "passport";
+import GoogleStrategy from 'passport-google-oauth20'
 export const login = async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -78,3 +79,47 @@ export const user = async (req, res) => {
         res.status(500).json({ message: 'Error fetching user data' });
     }
 }
+
+// register Google with  Google OAuth
+
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: "http://localhost:4000/api/v1/auth/google/callback"
+},
+async (accessToken, refreshToken, profile, done) => 
+    {
+        try {
+            
+            const existingEmail = await User.findOne({ where: { email: profile.emails[0].value } });
+            if (existingEmail) {
+                return done(null, existingUser)
+            }
+
+            const newUser = await User.create ({
+                username: profile.displayName,
+                email: profile.emails[0].value,
+                googleId: profile.id,
+                role: 2,
+                password: null
+            });
+            return done(null, newUser)
+        } catch (error) {
+            return done(error, null)
+        }
+    }
+));
+
+passport.serializeUser((user, done) => {
+    done(null, user.id)
+});
+
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await User.findByPk(id)
+        done(null, user);
+    } catch (error) {
+        done(error, null)
+    }
+})
+
