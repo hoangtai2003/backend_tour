@@ -9,11 +9,6 @@ export const createBooking = async (req, res) => {
     const {
         tour_child_id,
         user_id,
-        number_of_adults,
-        number_of_children,
-        number_of_toddler,
-        number_of_baby,
-        total_price,
         full_name,
         email,
         phone_number,
@@ -24,6 +19,7 @@ export const createBooking = async (req, res) => {
     } = req.body;
 
     try {
+
         const tourChild  = await TourChild.findByPk(tour_child_id, {
             attributes: ['start_date'],
             include: [
@@ -35,6 +31,12 @@ export const createBooking = async (req, res) => {
             ]
         })
         const user = await User.findByPk(user_id)
+        const number_of_adults = parseInt(req.body.number_of_adults, 10);
+        const number_of_children = parseInt(req.body.number_of_children, 10);
+        const number_of_toddler = parseInt(req.body.number_of_toddler, 10);
+        const number_of_baby = parseInt(req.body.number_of_baby, 10);
+        const total_price = parseInt(req.body.total_price, 10);
+
         const totalPassenger = number_of_adults + number_of_children + number_of_toddler + number_of_baby
         if (!tourChild || !user) {
             return res.status(404).json({

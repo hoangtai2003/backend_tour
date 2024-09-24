@@ -17,7 +17,6 @@ export const createTour = async (req, res) => {
         introduct_tour, 
         location_ids,
         tour_children,
-        program_code
     } = req.body;
 
    
