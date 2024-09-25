@@ -582,22 +582,68 @@ export const getTourBySearch = async (req, res) => {
     }
 };
 
-// get featured tour
-export const getFeaturedTour = async (req, res) => {
-    try {
-        const tours = await Tour.find({ featured: true }).limit(8).populate('reviews')
-        res.status(200).json({success:true, message: "Successfully", data: tours })
-    } catch(err) {
-        res.status(500).json({success:false, message:'Not Found'})
-    }
-}
+export const getCountTourRelated = async (req, res) => {
+    const { location_id } = req.params; 
 
-// get tour counts 
-export const getTourCount = async(req, res) => {
-    try{
-        const tourCount = await Tour.estimatedDocumentCount();
-        res.status(200).json({success:true, message: "Successfully", data: tourCount })
-    } catch (err) {
-        res.status(500).json({success:false, message:'Not Found'})
+    try {
+        const locationTourCount = await TourLocation.findAndCountAll({
+            where: {
+                location_id: location_id
+            },
+            attributes: ['tour_id', 'location_id'],
+            include: [
+                {
+                    model: Location,
+                    as: 'location',
+                    attributes: ['name', 'location_img', 'parent_id', 'description', 'status']
+                }
+            ]
+        });
+
+        return res.status(200).json({
+            success: true,
+            location_id: location_id,
+            tourCount: locationTourCount
+        });
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to get tour counts by location',
+            error: error.message
+        });
     }
-}
+};
+// Tính tổng số tour theo địa điểm
+export const getCountToursByLocation = async (req, res) => {
+    try {
+        const locationTourCounts = await TourLocation.findAll({
+            attributes: [
+                'location_id',
+                [Sequelize.fn('COUNT', Sequelize.col('tour_id')), 'tour_count'] 
+            ],
+            group: ['location_id'], 
+            include: [
+                {
+                    model: Location,
+                    as: 'location',
+                    attributes: ['name', 'location_img', 'status'] 
+                }
+            ],
+        });
+        return res.status(200).json({
+            success: true,
+            data: locationTourCounts
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to get tour counts by location',
+            error: error.message
+        });
+    }
+};
+
+
+
