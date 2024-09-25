@@ -2,14 +2,14 @@ import Location from '../models/Location.js'
 
 // create new location
 export const createLocation = async(req, res) => {
-    const {name, description, parent_id, location_img, status} = req.body
-
+    const {name, description, parent_id, status} = req.body
+    const location_img = req.files;
     try {
         const newLocation = await Location.create({
             name,
             description,
             parent_id: parent_id || 0,
-            location_img,
+            location_img: `http://localhost:4000/images/locations/${location_img[0].filename}`,
             status
         })
 
@@ -27,42 +27,34 @@ export const createLocation = async(req, res) => {
         })
         res.status(200).json({success:true, message:'Location successfully created', data: locationWithRelations})
     } catch (error) {
-        res.status(500).json({success:false,  message:'Failed to create location. Try again'})
+        res.status(500).json({success:false, error,  message:'Failed to create location. Try again'})
     }
 }
 
 // update location 
 export const updateLocation = async(req, res) => {
-    const id = req.params.id
-    const {name, description, parent_id, location_img, status} = req.body
+    const { id }= req.params
+    const {name, description, parent_id, status} = req.body
+    const location_img = req.files;
     try {
         const locationToUpdate = await Location.findByPk(id)
         if(!locationToUpdate){
             return res.status(404).json({ success: false, message: 'Location not found' });
         }
-        await locationToUpdate.update({
+        const updateData = {
             name,
             description,
             parent_id: parent_id || locationToUpdate.parent_id,
-            location_img,
             status
-        })
-
-        const updatedLocation = await Location.findByPk(id, {
-            include: [
-                {
-                    model: Location,
-                    as: 'parent'
-                },
-                {
-                    model: Location,
-                    as: 'children'
-                }
-            ]
-        })
-        res.status(200).json({success:true, message:'Location successfully updated', data: updatedLocation})
+        }
+        if (location_img && location_img.length > 0) {
+            updateData.location_img = `http://localhost:4000/images/locations/${location_img[0].filename}`;
+        }
+        await locationToUpdate.update(updateData)  
+        
+        res.status(200).json({success:true, message:'Location successfully updated', data: locationToUpdate})
     } catch (error) {
-        res.status(500).json({success:false, error, message:'Failed to update location. Try again'})
+        res.status(500).json({success:false, message:'Failed to update location. Try again'})
     }
 }
 

@@ -24,8 +24,6 @@ const corsOption = {
     credentials: true 
 }
 
-
-
 //database connection
 sequelize.authenticate()
     .then(() => console.log('MySQL database connected'))
@@ -37,6 +35,7 @@ app.use(express.json())
 app.use(cors(corsOption)) 
 app.use(cookieParser()) 
 app.use('/images/tours', express.static('images/tours'));
+app.use('/images/locations', express.static('images/locations'))
 
 // Google OAuth
 app.use(session({
