@@ -30,6 +30,13 @@ const User = sequelize.define('User', {
     status: {
         type: DataTypes.STRING,
         defaultValue: 0
+    },
+    gender: {
+        type: DataTypes.STRING,
+        defaultValue: "Nam"
+    },
+    dateBirthday: {
+        type: DataTypes.DATE,
     }
 }, {
     timestamps: true,
