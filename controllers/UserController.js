@@ -1,5 +1,5 @@
 import User from '../models/User.js'
-import bcrypt from 'bcryptjs'
+import bcrypt from 'bcrypt'
 export const createUser = async (req, res) => {
     try {
         const { username, email, password, phone, status, role } = req.body;
@@ -28,19 +28,53 @@ export const createUser = async (req, res) => {
 
 
 // update user 
-export const updateUser = async(req, res) => {
-    const id = req.params.id
+export const updateUser = async (req, res) => {
+    const id = req.params.id;
+    const { username, email, currentPassword, newPassword, confirmPassword, phone, status, role, dateBirthday, gender, address } = req.body;
+
     try {
-        const updateUser = await User.findByPk(id)
-        if (!updateUser) {
+        
+        const userToUpdate = await User.findByPk(id);
+        if (!userToUpdate) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
-        await updateUser.update(req.body);
-        res.status(200).json({success:true, message:'Successfully updated', data: updateUser})
-    } catch(err){
-        res.status(500).json({success:false, message:'Failed to update. Try again'})
+        if (newPassword || confirmPassword) {
+           
+            const isMatch = await bcrypt.compare(currentPassword, userToUpdate.password);
+            if (!isMatch) {
+                return res.json({ success: false, message: 'Mật khẩu cũ không chính xác. Vui lòng thử lại.' });
+            }
+
+           
+            if (newPassword !== confirmPassword) {
+                return res.json({ success: false, message: 'Mật khẩu mới và xác nhận mật khẩu không khớp.' });
+            }
+
+            const salt = bcrypt.genSaltSync(10);
+            const hash = bcrypt.hashSync(newPassword, salt);
+
+            userToUpdate.password = hash;
+        }
+
+        await userToUpdate.update({
+            username,
+            email,
+            phone,
+            status,
+            role,
+            dateBirthday,
+            gender,
+            address
+        });
+
+        res.status(200).json({ success: true, message: 'Thông tin cập nhật thành công', data: userToUpdate });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Failed to update. Try again' });
     }
-}
+};
+
+
 
 // delete user 
 export const deleteUser = async(req, res) => {
