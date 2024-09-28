@@ -353,9 +353,10 @@ export const getAllBooking = async(req, res) => {
     }
 }
 export const getBooking = async(req, res) => {
-    const { id } = req.params
+    const userId = req.user.id;
     try {
-        const booking = await Booking.findByPk(id, {
+        const booking = await Booking.findAll({
+            where: { user_id: userId },
             include: [
                 {
                     model: TourChild,
@@ -365,7 +366,15 @@ export const getBooking = async(req, res) => {
                         {
                             model: Tour,
                             as : "tour",
-                            attributes: ['name', 'departure_city', 'duration']
+                            attributes: ['name', 'departure_city', 'duration'],
+                            include: [
+                                {
+                                    model: TourImage,
+                                    as: 'tourImage',
+                                    attributes: ['image_url']
+                                }
+                            ]
+
                         }
                     ]
                 }, 
@@ -375,9 +384,15 @@ export const getBooking = async(req, res) => {
                     attributes: ['booking_id', 'passenger_name', 'passenger_dateOfBirthday', 'passenger_gender']
                 }
             ]
-        })
-        res.status(200).json({success:true, message: "Successfully", data: booking})
+        });
+
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        res.status(200).json({ success: true, message: "Successfully", data: booking });
     } catch (error) {
-        res.status(500).json({success:false, message:'Not Found'})
+        console.log(error)
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
 }

@@ -54,9 +54,9 @@ const Booking = sequelize.define('Booking', {
         type: DataTypes.INTEGER,
     },
     status: {
-        type: DataTypes.ENUM('Đang chờ xử lý', 'Đã xác nhận', 'Đã thanh toán', 'Hoàn thành', 'Hủy bỏ', 'Nhắc nhở'),
+        type: DataTypes.ENUM('Chờ xác nhận', 'Đã xác nhận', 'Đã thanh toán', 'Hoàn thành', 'Hủy bỏ', 'Nhắc nhở', 'Chờ thanh toán', 'Quá hạn thanh toán'),
         allowNull: false,
-        defaultValue: 'Đang chờ xử lý',
+        defaultValue: 'Chờ xác nhận',
     },
     booking_note: {
         type: DataTypes.STRING
