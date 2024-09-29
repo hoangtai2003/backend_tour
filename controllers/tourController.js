@@ -543,7 +543,6 @@ export const getTourByTourCode = async (req, res) => {
             data: tourChild,
         });
     } catch (error) {
-        console.error(error);
         res.status(500).json({
             success: false,
             message: "Failed to retrieve tour",

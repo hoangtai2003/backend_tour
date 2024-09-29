@@ -17,7 +17,7 @@ export const createBooking = async (req, res) => {
         booking_passenger,
         status
     } = req.body;
-
+    const passengers = JSON.parse(booking_passenger || '[]')
     try {
 
         const tourChild  = await TourChild.findByPk(tour_child_id, {
@@ -72,10 +72,9 @@ export const createBooking = async (req, res) => {
             tourName: tourChild.tour.name,
             startDate: tourChild.start_date
         }
-        await sendEmailHandleBooking(bookingDetails.email, bookingDetails.status, bookingDetails)
        // create passenger
-        if (booking_passenger && Array.isArray(booking_passenger)){
-            const bookingPassengerPromises = booking_passenger.map(passenger => {
+        if (passengers && Array.isArray(passengers)){
+            const bookingPassengerPromises = passengers.map(passenger => {
                 return Passenger.create({
                     booking_id: newBooking.id,
                     ...passenger
@@ -83,6 +82,7 @@ export const createBooking = async (req, res) => {
             });
             await Promise.all(bookingPassengerPromises)
         }
+        await sendEmailHandleBooking(bookingDetails.email, bookingDetails.status, bookingDetails)
         return res.status(201).json({
             success: true,
             message: 'Booking created successfully',
@@ -121,7 +121,7 @@ const sendEmailHandleBooking = async (email, status, bookingDetails) => {
     const startDate = bookingDetails.startDate
     let subject, html
     switch (status) {
-        case 'Đang chờ xử lý':
+        case 'Chờ xác nhận':
             subject = 'Tiếp nhận thông tin đặt Tour'
             html = `
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -189,7 +189,7 @@ const sendStatusEmail = async (email, status, booking) => {
     const totalPassenger = booking.number_of_adults + booking.number_of_children + booking.number_of_toddler + booking.number_of_baby
     let subject, html;
     switch (status) {
-        case 'Đã xác nhận': 
+        case 'Chờ thanh toán': 
             subject = 'Xác nhận đặt tour';
             html = `
                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -395,4 +395,56 @@ export const getBooking = async(req, res) => {
         console.log(error)
         res.status(500).json({ success: false, message: 'Server Error' });
     }
+}
+
+export const getBookingByBookingCode = async(req, res) => {
+    const { bookingCode } = req.params;
+    try {
+        const bookingDetails = await Booking.findOne({
+            where: { booking_code: bookingCode },
+            include: [
+                {
+                    model: TourChild,
+                    as: 'bookingTourChild',
+                    attributes: ['tour_code'],
+                    include: [
+                        {
+                            model: Tour,
+                            as: 'tour',
+                            attributes: ['name'],
+                            include: [
+                                {
+                                    model: TourImage,
+                                    as: 'tourImage',
+                                    attributes: ['image_url']
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    model: Passenger,
+                    as: 'bookingPassenger',
+                    attributes: ['passenger_name', 'passenger_dateOfBirthday', 'passenger_gender']
+                }
+            ]
+        })
+        if (!bookingDetails){
+            return res.status(404).json({
+                success: false,
+                message: "Booking detail not found",
+            });
+        }
+        res.status(200).json({
+            success: true,
+            message: "Successfully retrieved booking detail",
+            data: bookingDetails,
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to retrieve booking detail",
+        });
+    }
+   
 }
