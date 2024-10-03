@@ -644,5 +644,149 @@ export const getCountToursByLocation = async (req, res) => {
     }
 };
 
+// get tour by filter
+export const getTourFilterPrice = async(req, res) => {
+    const { price } = req.query
+
+    let priceCondition = {}
+    try {
+        switch(price) {
+            case "under5":
+                priceCondition = {
+                    price: {
+                        [Op.lte]: 5000000
+                    }
+                };
+                break;
+            case "5-10":
+                priceCondition = {
+                    price: {
+                        [Op.gte]: 5000000,
+                        [Op.lte]: 10000000
+                    }
+                }
+                break;
+            case "10-20":
+                priceCondition = {
+                    price: {
+                        [Op.gte]: 10000000,
+                        [Op.lte]: 20000000
+                    }
+                }
+                break
+            case 'bigger20':
+                    priceCondition = {
+                        price: {
+                            [Op.gt]: 20000000 
+                        }
+                    };
+                    break;
+            default: 
+                return res.status(400).json({
+                    success: false,
+                    message: "Khoảng giá không hợp lệ. Vui lòng chọn từ 5-10, 10-20 hoặc 20+"
+                });
+        }
+
+        const filteredTours = await Tour.findAll({
+            where: priceCondition,
+            include: [
+                {
+                    model: TourImage,
+                    as: 'tourImage',
+                    attributes: ['image_url']
+                },
+                {
+                    model: TourChild,
+                    as: 'tourChildren',
+                }
+            ]
+        })
+        if (filteredTours.length === 0) {
+            return res.status(404).json({
+                success: true,
+                message: "Không có tour nào phù hợp với điều kiện giá"
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            count: filteredTours.length,
+            data: filteredTours
+        });
+    } catch (error) {
+        console.error("Lỗi khi lọc tour theo giá:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Lỗi server khi lọc tour theo giá"
+        });
+    }
+}
+
+export const getFilterSortPrice = async (req, res) => {
+    const { sortPrice } = req.query;
+    let orderCondition = []; 
+
+    try {
+        switch (sortPrice) {
+            case "tatca":
+                break;
+            case "giatucaodenthap":
+                orderCondition.push(['price', 'DESC']); 
+                break;
+            case "giatuthapdencao":
+                orderCondition.push(['price', 'ASC']); 
+                break;
+            case "giatuthapdencao":
+                orderCondition.push([{ model: TourChild, as: 'tourChildren' }, 'start_date', 'DESC']); 
+                break;
+            default:
+                return res.status(400).json({
+                    success: false,
+                    message: "Chọn trường hợp hợp lệ"
+                });
+        }
+
+       
+        const filterTourSort = await Tour.findAll({
+            include: [
+                {
+                    model: TourImage,
+                    as: 'tourImage',
+                    attributes: ['image_url']
+                },
+                {
+                    model: TourChild,
+                    as: 'tourChildren',
+                    attributes: ['start_date'], 
+                }
+            ],
+            order: orderCondition 
+        });
+
+        if (filterTourSort.length === 0) {
+            return res.status(404).json({
+                success: true,
+                message: "Không có tour nào phù hợp với điều kiện"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            count: filterTourSort.length,
+            data: filterTourSort
+        });
+
+    } catch (error) {
+        console.error("Lỗi khi lọc tour theo giá:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Lỗi server khi lọc tour"
+        });
+    }
+}
+
+
+
+
 
 
