@@ -75,6 +75,9 @@ const Booking = sequelize.define('Booking', {
     },
     booking_code: {
         type: DataTypes.STRING
+    },
+    payment_method: {
+        type: DataTypes.STRING
     }
 }, {
     tableName: 'booking',

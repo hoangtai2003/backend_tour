@@ -5,6 +5,7 @@ import User from "../models/User.js";
 import Tour from "../models/Tour.js";
 import nodemailer from 'nodemailer'
 import TourImage from "../models/TourImage.js";
+import { createVNPayPaymentUrl } from "./PaymentController.js";
 export const createBooking = async (req, res) => {
     const {
         tour_child_id,
@@ -15,7 +16,8 @@ export const createBooking = async (req, res) => {
         address,
         booking_note,
         booking_passenger,
-        status
+        status,
+        payment_method
     } = req.body;
     const passengers = JSON.parse(booking_passenger || '[]')
     try {
@@ -58,9 +60,9 @@ export const createBooking = async (req, res) => {
             address: address || user.address,
             booking_note,
             status,
-            booking_code: generateBookingCode()
+            booking_code: generateBookingCode(),
+            payment_method
         })
-        
         const bookingDetails = {
             full_name: newBooking.full_name,
             bookingCode: newBooking.booking_code,
@@ -82,14 +84,21 @@ export const createBooking = async (req, res) => {
             });
             await Promise.all(bookingPassengerPromises)
         }
-        await sendEmailHandleBooking(bookingDetails.email, bookingDetails.status, bookingDetails)
-        return res.status(201).json({
-            success: true,
-            message: 'Booking created successfully',
-            data: newBooking
-
-        });
+        if (payment_method === 'vnpay'){
+            const vnpUrl = createVNPayPaymentUrl(newBooking.booking_code, total_price, req)
+            return res.status(200).json({ success: true, url: vnpUrl });
+        } else {
+            await sendEmailHandleBooking(bookingDetails.email, bookingDetails.status, bookingDetails)
+            return res.status(201).json({
+                success: true,
+                message: 'Booking created successfully',
+                data: newBooking
+    
+            });
+        }
+        
     } catch (error) {
+        console.log(error)
         return res.status(500).json({
             success: false,
             message: 'Failed to create booking',
