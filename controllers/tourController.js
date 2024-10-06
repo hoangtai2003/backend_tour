@@ -17,6 +17,7 @@ export const createTour = async (req, res) => {
         introduct_tour, 
         location_ids,
         tour_children,
+        transportation
     } = req.body;
 
    
@@ -48,6 +49,7 @@ export const createTour = async (req, res) => {
             duration, 
             departure_city, 
             introduct_tour,
+            transportation,
             program_code: generateProgramCode()
         });
 
@@ -105,7 +107,6 @@ export const createTour = async (req, res) => {
     }
 };
 
-
 // update tour
 export const updateTour = async (req, res) => {
     const id = req.params.id; 
@@ -115,7 +116,8 @@ export const updateTour = async (req, res) => {
         price, 
         duration, 
         departure_city, 
-        introduct_tour, 
+        introduct_tour,
+        transportation, 
         location_ids,
         tour_children
     } = req.body;
@@ -140,7 +142,8 @@ export const updateTour = async (req, res) => {
             duration, 
             departure_city, 
             tour_images, 
-            introduct_tour
+            introduct_tour,
+            transportation
         });
 
         if (children && Array.isArray(children)) {
@@ -247,7 +250,6 @@ const generateProgramCode = () => {
     return programCode;
 };
 
-
 // delete tour
 export const deleteTour = async (req, res) => {
     const id = req.params.id;
@@ -276,7 +278,6 @@ export const deleteTour = async (req, res) => {
         });
     }
 };
-
 
 // get single tour
 export const getSingleTour = async (req, res) => {
@@ -419,7 +420,6 @@ export const getAllTour = async (req, res) => {
         res.status(500).json({ success: false, err, message: 'Failed to retrieve tours. Try again' });
     }
 };
-
 
 export const getRelatedTours = async (req, res) => {
     const tourId = req.params.id;
@@ -784,6 +784,98 @@ export const getFilterSortPrice = async (req, res) => {
         });
     }
 }
+
+export const getFilterTour = async(req, res) => {
+    const { price, departure_city, destination_city, start_date, transportation } = req.query;
+    let priceCondition = {};
+    let tourChildrenCondition = {};
+    try {
+        // Lọc theo khoảng giá
+        switch(price) {
+            case "under5":
+                priceCondition = {
+                    price: {
+                        [Op.lte]: 5000000
+                    }
+                };
+                break;
+            case "5-10":
+                priceCondition = {
+                    price: {
+                        [Op.gte]: 5000000,
+                        [Op.lte]: 10000000
+                    }
+                };
+                break;
+            case "10-20":
+                priceCondition = {
+                    price: {
+                        [Op.gte]: 10000000,
+                        [Op.lte]: 20000000
+                    }
+                };
+                break;
+            case "bigger20":
+                priceCondition = {
+                    price: {
+                        [Op.gt]: 20000000 
+                    }
+                };
+                break;
+            default: 
+                return res.status(400).json({
+                    success: false,
+                    message: "Khoảng giá không hợp lệ. Vui lòng chọn Dưới 5 triệu, 5-10 triệu, 10-20 triệu, hoặc Trên 20 triệu"
+                });
+        }
+       
+        if (start_date) {
+            tourChildrenCondition = {
+                start_date: {
+                    [Op.eq]: start_date
+                },
+
+            };
+        }
+        const filterTour = await Tour.findAll({
+            where: {
+                ...priceCondition,
+                ...(departure_city && { departure_city }),
+                ...(transportation && { transportation }),
+            },
+            include: [
+                {
+                    model: TourChild,
+                    as: 'tourChildren',
+                    where: tourChildrenCondition,
+                    required: true 
+                },
+                {
+                    model: TourImage,
+                    as: 'tourImage',
+                    attributes: ['image_url']
+                }
+            ]
+        });
+        if (filterTour.length === 0) {
+            return res.status(404).json({
+                success: true,
+                message: "Không có tour nào phù hợp với điều kiện"
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            count: filterTour.length,
+            data: filterTour
+        });
+    } catch (error) {
+        console.error("Lỗi khi lọc tour:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Lỗi server khi lọc tour"
+        });
+    }
+};
 
 
 
