@@ -785,94 +785,80 @@ export const getFilterSortPrice = async (req, res) => {
     }
 }
 
-export const getFilterTour = async(req, res) => {
-    const { price, departure_city, destination_city, start_date, transportation } = req.query;
+export const getFilterTour = async (req, res) => {
+    const { price, departure_city, name, start_date, transportation } = req.query;
     let priceCondition = {};
-    let tourChildrenCondition = {};
+    let dateCondition = {};
+    let destinationCondition = {};
     try {
-        // Lọc theo khoảng giá
-        switch(price) {
+        switch (price) {
             case "under5":
-                priceCondition = {
-                    price: {
-                        [Op.lte]: 5000000
-                    }
-                };
+                priceCondition = { price: { [Op.lte]: 5000000 } };
                 break;
             case "5-10":
-                priceCondition = {
-                    price: {
-                        [Op.gte]: 5000000,
-                        [Op.lte]: 10000000
-                    }
-                };
+                priceCondition = { price: { [Op.gte]: 5000000, [Op.lte]: 10000000 } };
                 break;
             case "10-20":
-                priceCondition = {
-                    price: {
-                        [Op.gte]: 10000000,
-                        [Op.lte]: 20000000
-                    }
-                };
+                priceCondition = { price: { [Op.gte]: 10000000, [Op.lte]: 20000000 } };
                 break;
             case "bigger20":
-                priceCondition = {
-                    price: {
-                        [Op.gt]: 20000000 
-                    }
-                };
+                priceCondition = { price: { [Op.gte]: 20000000 } };
                 break;
-            default: 
-                return res.status(400).json({
-                    success: false,
-                    message: "Khoảng giá không hợp lệ. Vui lòng chọn Dưới 5 triệu, 5-10 triệu, 10-20 triệu, hoặc Trên 20 triệu"
-                });
         }
-       
-        if (start_date) {
-            tourChildrenCondition = {
-                start_date: {
-                    [Op.eq]: start_date
-                },
 
+        if (start_date) {
+            dateCondition = {
+                start_date: {
+                    [Op.gte]: new Date(start_date),
+                    [Op.lte]: new Date(new Date(start_date).setHours(23, 59, 59)) 
+                }
             };
         }
-        const filterTour = await Tour.findAll({
+        if (name) {
+            destinationCondition = {
+                name: {
+                    [Op.eq]: name
+                }
+            }
+        }
+
+        const tours = await Tour.findAll({
             where: {
                 ...priceCondition,
-                ...(departure_city && { departure_city }),
-                ...(transportation && { transportation }),
+                departure_city: departure_city ? { [Op.eq]: departure_city } : undefined,
+                transportation: transportation ? { [Op.eq]: transportation } : undefined,
             },
             include: [
                 {
                     model: TourChild,
                     as: 'tourChildren',
-                    where: tourChildrenCondition,
+                    where: dateCondition,
                     required: true 
                 },
                 {
                     model: TourImage,
                     as: 'tourImage',
                     attributes: ['image_url']
+                },
+                {
+                   model: Location,
+                   as: 'locations',
+                   attributes: ['id', 'name'],
+                   where: destinationCondition
                 }
             ]
         });
-        if (filterTour.length === 0) {
-            return res.status(404).json({
-                success: true,
-                message: "Không có tour nào phù hợp với điều kiện"
-            });
-        }
-        return res.status(200).json({
+
+        res.status(200).json({
             success: true,
-            count: filterTour.length,
-            data: filterTour
+            count: tours.length,
+            data: tours
         });
     } catch (error) {
-        console.error("Lỗi khi lọc tour:", error);
-        return res.status(500).json({
+        console.error(error);
+        res.status(500).json({
             success: false,
-            message: "Lỗi server khi lọc tour"
+            message: 'Đã xảy ra lỗi khi lấy dữ liệu tour',
         });
     }
 };
