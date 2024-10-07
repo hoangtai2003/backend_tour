@@ -344,7 +344,7 @@ export const getSingleTour = async (req, res) => {
 export const getAllTour = async (req, res) => {
     // pagination
     const page = parseInt(req.query.page) || 1; 
-    const limit = 9;  
+    const limit = 8;  
     const offset = (page - 1) * limit;  
 
     try {
@@ -550,36 +550,6 @@ export const getTourByTourCode = async (req, res) => {
     }
 };
 
-// get tour by search
-export const getTourBySearch = async (req, res) => {
-    const { city, maxPrice, startDate } = req.query;
-
-    let searchConditions = {};
-
-
-    if (city) {
-        searchConditions.departure_city = { [Op.iLike]: `%${city}%` }; 
-    }
-
-    if (maxPrice) {
-        searchConditions.price = { [Op.lte]: parseFloat(maxPrice) }; 
-    }
-
-    if (startDate) {
-        searchConditions.start_date = { [Op.gte]: new Date(startDate) };
-    }
-
-    try {
-        const tours = await Tour.findAll({
-            where: searchConditions
-        });
-
-        res.status(200).json({ success: true, message: "Successfully retrieved tours", data: tours });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: 'Failed to retrieve tours' });
-    }
-};
 
 export const getCountTourRelated = async (req, res) => {
     const { location_id } = req.params; 
