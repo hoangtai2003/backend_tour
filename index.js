@@ -14,7 +14,7 @@ import reviewRoute from './routes/reviews.js'
 import bookingRoute from './routes/booking.js'
 import locationRoute from './routes/locations.js'
 import paymentRoute from './routes/payment.js'
-
+import categoryRoute from './routes/category.js'
 // Nạp các biến từ file .env vào process.env 
 dotenv.config()
 const app = express()
@@ -53,7 +53,8 @@ app.use('/api/v1/users', userRoute)
 app.use('/api/v1/review', reviewRoute)
 app.use('/api/v1/booking', bookingRoute)
 app.use('/api/v1/location', locationRoute)
-app.use('/api/v1/payment', paymentRoute)
+app.use('/api/v1/category', categoryRoute)
+app.use('/', paymentRoute)
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
