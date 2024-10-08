@@ -672,12 +672,6 @@ export const getTourFilterPrice = async(req, res) => {
                 }
             ]
         })
-        if (filteredTours.length === 0) {
-            return res.status(404).json({
-                success: true,
-                message: "Không có tour nào phù hợp với điều kiện giá"
-            });
-        }
         return res.status(200).json({
             success: true,
             count: filteredTours.length,
@@ -732,14 +726,6 @@ export const getFilterSortPrice = async (req, res) => {
             ],
             order: orderCondition 
         });
-
-        if (filterTourSort.length === 0) {
-            return res.status(404).json({
-                success: true,
-                message: "Không có tour nào phù hợp với điều kiện"
-            });
-        }
-
         return res.status(200).json({
             success: true,
             count: filterTourSort.length,
@@ -832,6 +818,130 @@ export const getFilterTour = async (req, res) => {
         });
     }
 };
+
+export const getSearchTour = async(req, res) => {
+    const { price, name, start_date, end_date } = req.query;
+    let priceCondition = {};
+    let dateCondition = {};
+    let destinationCondition = {};
+    try {
+        switch (price) {
+            case "under5":
+                priceCondition = { price: { [Op.lte]: 5000000 } };
+                break;
+            case "5-10":
+                priceCondition = { price: { [Op.gte]: 5000000, [Op.lte]: 10000000 } };
+                break;
+            case "10-20":
+                priceCondition = { price: { [Op.gte]: 10000000, [Op.lte]: 20000000 } };
+                break;
+            case "bigger20":
+                priceCondition = { price: { [Op.gte]: 20000000 } };
+                break;
+        }
+
+        if (start_date) {
+            dateCondition = {
+                start_date: {
+                    [Op.gte]: new Date(start_date),
+                    [Op.lte]: new Date(new Date(start_date).setHours(23, 59, 59)) 
+                },
+                end_date: {
+                    [Op.gte]: new Date(end_date),
+                    [Op.lte]: new Date(new Date(end_date).setHours(23, 59, 59)) 
+                }
+            };
+        }
+        if (name) {
+            destinationCondition = {
+                name: {
+                    [Op.eq]: name
+                }
+            }
+        }
+
+        const tours = await Tour.findAll({
+            where: {
+                ...priceCondition,
+            },
+            include: [
+                {
+                    model: TourChild,
+                    as: 'tourChildren',
+                    where: dateCondition,
+                    required: true 
+                },
+                {
+                    model: TourImage,
+                    as: 'tourImage',
+                    attributes: ['image_url']
+                },
+                {
+                   model: Location,
+                   as: 'locations',
+                   attributes: ['id', 'name', 'description'],
+                   where: destinationCondition
+                }
+            ]
+        });
+
+        res.status(200).json({
+            success: true,
+            count: tours.length,
+            data: tours
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: 'Đã xảy ra lỗi khi lấy dữ liệu tour',
+        });
+    }
+}
+
+export const getTourByNameLocation = async(req, res) => {
+    const { name } = req.query
+    let destinationCondition = {};
+    try {
+        if (name){
+            destinationCondition = {
+                name: {
+                    [Op.eq]: name
+                }
+            }
+        }
+        const tours = await Tour.findAll({
+            include: [
+                {
+                    model: TourChild,
+                    as: 'tourChildren',
+                },
+                {
+                    model: TourImage,
+                    as: 'tourImage',
+                    attributes: ['image_url']
+                },
+                {
+                   model: Location,
+                   as: 'locations',
+                   attributes: ['id', 'name', 'description'],
+                   where: destinationCondition
+                }
+            ]
+        })
+        res.status(200).json({
+            success: true,
+            count: tours.length,
+            data: tours
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: 'Đã xảy ra lỗi khi lấy dữ liệu tour',
+        });
+    }
+}
 
 
 
