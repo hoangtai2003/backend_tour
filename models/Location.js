@@ -21,7 +21,6 @@ const Location = sequelize.define('Location', {
     },
     location_img: {
         type: DataTypes.STRING,
-        allowNull: false
     },
     status: {
         type: DataTypes.ENUM("Hiển thị", "Không hiển thị"),
