@@ -48,6 +48,16 @@ export const editNews = async(req, res) => {
         res.status(500).json({success:false, message:'Đã có lỗi xảy ra !'})
     }
 }
+
+export const deleteNews = async(req, res) => {
+    const { id } = req.params
+    try {
+        await News.destroy({where: { id } })
+        res.status(200).json({success:true, message:'Xóa tin tức thành công'})
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Đã có lỗi xảy ra !' });
+    }
+}
 export const getSingleNews = async(req, res) => {
     const { id } = req.params
     try {
