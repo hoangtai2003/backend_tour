@@ -15,6 +15,7 @@ import bookingRoute from './routes/booking.js'
 import locationRoute from './routes/locations.js'
 import paymentRoute from './routes/payment.js'
 import categoryRoute from './routes/category.js'
+import newsRoute from './routes/news.js'
 // Nạp các biến từ file .env vào process.env 
 dotenv.config()
 const app = express()
@@ -36,6 +37,7 @@ app.use(cors(corsOption))
 app.use(cookieParser()) 
 app.use('/images/tours', express.static('images/tours'));
 app.use('/images/locations', express.static('images/locations'))
+app.use('/images/news', express.static('images/news'))
 
 // Google OAuth
 app.use(session({
@@ -54,6 +56,7 @@ app.use('/api/v1/review', reviewRoute)
 app.use('/api/v1/booking', bookingRoute)
 app.use('/api/v1/location', locationRoute)
 app.use('/api/v1/category', categoryRoute)
+app.use('/api/v1/news', newsRoute)
 app.use('/', paymentRoute)
 
 app.listen(port, () => {
