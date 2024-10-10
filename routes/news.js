@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { createNews, deleteNews, editNews, getALlNews, getSingleNews } from '../controllers/NewsController.js';
+import { createNews, deleteNews, editNews, getALlNews, getSingleNews, getNewsBySlug } from '../controllers/NewsController.js';
 
 const router = express.Router();
 
@@ -30,6 +30,7 @@ router.post('/upload', upload.single('upload'), (req, res) => {
 router.post('/', upload.array('news_image', 10), createNews);
 router.put('/:id', upload.array('news_image', 10), editNews);
 router.get('/', getALlNews)
-router.get('/:id', getSingleNews)
+router.get('/:slug', getNewsBySlug)
+router.get('/singleNews/:id', getSingleNews)
 router.delete('/:id', deleteNews)
 export default router;

@@ -63,6 +63,30 @@ export const deleteNews = async(req, res) => {
         res.status(500).json({ success: false, message: 'Đã có lỗi xảy ra !' });
     }
 }
+export const getNewsBySlug = async(req, res) => {
+    const { slug } = req.params
+    try {
+        const news = await News.findOne({ 
+            where: {
+                news_slug: slug
+            },
+            include: [
+                {
+                    model: Category,
+                    as: 'newsCate',
+                    attributes: ['cate_name']
+
+                }
+            ]
+         })
+        if(!news){
+            return res.status(404).json({ success: false, message: 'Tin tức này không được tìm thấy' });
+        }
+        res.status(200).json({success:true, message:'', data: news})
+    } catch (error) {
+        res.status(500).json({success:false, message:'Đã có lỗi xảy ra !'})
+    }
+}
 export const getSingleNews = async(req, res) => {
     const { id } = req.params
     try {
