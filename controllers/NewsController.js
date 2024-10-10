@@ -1,15 +1,18 @@
 import Category from '../models/Category.js'
 import News from '../models/News.js'
+import { createSlug } from '../utils/slug.js'
 export const createNews = async(req, res) => {
     const {news_name, news_description, news_date, cate_id} = req.body
     const news_image = req.files
+    const slug = createSlug(news_name)
     try {
         const createNews = await News.create({
             news_name,
             news_date,
             news_description,
             news_image: `http://localhost:4000/images/news/${news_image[0].filename}`,
-            cate_id
+            cate_id,
+            slug
         })
         res.status(200).json({success:true, message:'Tạo mới tin tức thành công', data: createNews})
     } catch (error) {
@@ -25,7 +28,7 @@ export const editNews = async(req, res) => {
     const { id } = req.params
     const {news_name, news_description, news_date, cate_id, news_status} = req.body
     const news_image = req.files
-
+    const slug = createSlug(news_name)
     try {
         const editNews = await News.findByPk(id)
         if(!editNews){
@@ -38,6 +41,7 @@ export const editNews = async(req, res) => {
             news_date,
             cate_id,
             news_status,
+            slug
         }
         if (news_image && news_image.length > 0) {
             updateData.news_image = `http://localhost:4000/images/news/${news_image[0].filename}`;

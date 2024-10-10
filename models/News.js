@@ -36,6 +36,11 @@ const News = sequelize.define("News", {
     },
     news_status: {
         type: DataTypes.ENUM("Xuất bản", "Không xuất bản")
+    },
+    slug: {
+        type: DataTypes.STRING, 
+        allowNull: false,
+        unique: true 
     }
 }, {
     tableName: "news",
