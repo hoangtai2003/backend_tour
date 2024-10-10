@@ -2,9 +2,9 @@ import Category from '../models/Category.js'
 import News from '../models/News.js'
 import { createSlug } from '../utils/slug.js'
 export const createNews = async(req, res) => {
-    const {news_name, news_description, news_date, cate_id} = req.body
+    const {news_name, news_description, news_date, cate_id, news_content} = req.body
     const news_image = req.files
-    const slug = createSlug(news_name)
+    const news_slug = createSlug(news_name)
     try {
         const createNews = await News.create({
             news_name,
@@ -12,7 +12,8 @@ export const createNews = async(req, res) => {
             news_description,
             news_image: `http://localhost:4000/images/news/${news_image[0].filename}`,
             cate_id,
-            slug
+            news_slug,
+            news_content
         })
         res.status(200).json({success:true, message:'Tạo mới tin tức thành công', data: createNews})
     } catch (error) {
@@ -26,22 +27,22 @@ export const createNews = async(req, res) => {
 
 export const editNews = async(req, res) => {
     const { id } = req.params
-    const {news_name, news_description, news_date, cate_id, news_status} = req.body
+    const {news_name, news_description, news_date, cate_id, news_status, news_content} = req.body
     const news_image = req.files
-    const slug = createSlug(news_name)
+    const news_slug = createSlug(news_name)
     try {
         const editNews = await News.findByPk(id)
         if(!editNews){
             return res.status(404).json({ success: false, message: 'Tin tức này không được tìm thấy' });
         }
-
         const updateData = {
             news_name,
             news_description,
             news_date,
             cate_id,
             news_status,
-            slug
+            news_slug,
+            news_content
         }
         if (news_image && news_image.length > 0) {
             updateData.news_image = `http://localhost:4000/images/news/${news_image[0].filename}`;

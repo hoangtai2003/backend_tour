@@ -28,7 +28,7 @@ const News = sequelize.define("News", {
         allowNull: false
     },
     news_description: {
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT,
         allowNull: false
     },
     news_date: {
@@ -37,13 +37,17 @@ const News = sequelize.define("News", {
     news_status: {
         type: DataTypes.ENUM("Xuất bản", "Không xuất bản")
     },
-    slug: {
+    news_slug: {
         type: DataTypes.STRING, 
         allowNull: false,
         unique: true 
+    },
+    news_content:{
+        type: DataTypes.TEXT,
+        allowNull: false
     }
 }, {
-    tableName: "news",
+    tableName: "newsletter",
     timestamps: true
 })
 
