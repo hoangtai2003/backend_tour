@@ -108,6 +108,7 @@ export const getALlNews = async(req, res) => {
             limit,
             offset,
             distinct: true,
+            order: [['news_date', 'DESC']],
             include: [
                 {
                     model: Category,
