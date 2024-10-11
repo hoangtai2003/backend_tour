@@ -114,7 +114,7 @@ export const getALlNews = async(req, res) => {
                 {
                     model: Category,
                     as: 'newsCate',
-                    attributes: ['cate_name']
+                    attributes: ['cate_name', 'cate_slug']
 
                 }
             ]
