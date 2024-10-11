@@ -74,7 +74,7 @@ export const createBooking = async (req, res) => {
             tourName: tourChild.tour.name,
             startDate: tourChild.start_date
         }
-       // create passenger
+
         if (passengers && Array.isArray(passengers)){
             const bookingPassengerPromises = passengers.map(passenger => {
                 return Passenger.create({
@@ -86,7 +86,7 @@ export const createBooking = async (req, res) => {
         }
         if (payment_method === 'vnpay'){
             const vnpUrl = createVNPayPaymentUrl(newBooking.booking_code, total_price, req)
-            return res.status(200).json({ success: true, url: vnpUrl });
+            return res.status(200).json({ success: true, url: vnpUrl});
         } else {
             await sendEmailHandleBooking(bookingDetails.email, bookingDetails.status, bookingDetails)
             return res.status(201).json({
@@ -121,7 +121,7 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_PASS
     }
 })
-const sendEmailHandleBooking = async (email, status, bookingDetails) => {
+export const sendEmailHandleBooking = async (email, status, bookingDetails) => {
     const tourName = bookingDetails.tourName;
     const bookingCode = bookingDetails.bookingCode
     const full_name = bookingDetails.full_name
@@ -181,6 +181,59 @@ const sendEmailHandleBooking = async (email, status, bookingDetails) => {
             </body>
         `
         break
+        case "Đã thanh toán": 
+        subject = "Đặt tour thành công"
+        html = `
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <header style="background-color: #003366; color: #ffffff; padding: 20px; text-align: center;">
+                    <h1 style="margin: 0;">Đặt tour thành công</h1>
+                </header>
+                
+                <main style="padding: 20px;">
+                    <p style="font-size: 16px;">Kính gửi ${full_name},</p>
+                    
+                    <p style="font-size: 16px;">
+                        Chúng tôi xin gửi lời cảm ơn chân thành vì bạn đã chọn Du lịch Việt cho chuyến đi sắp tới của mình. 
+                        Chúng tôi vui mừng thông báo rằng chúng tôi đã nhận được khoản thanh toán của bạn và xác nhận đặt chỗ của bạn đã được hoàn tất.
+                    </p>
+                    
+                    <h2 style="color: #003366; border-bottom: 2px solid #003366; padding-bottom: 10px;">Thông tin đặt tour:</h2>
+                    <ul style="list-style-type: none; padding-left: 0;">
+                        <li style="margin-bottom: 10px;"><strong>Mã đặt tour: ${bookingCode}</strong> </li>
+                        <li style="margin-bottom: 10px;"><strong>Tên tour: ${tourName}</strong> </li>
+                        <li style="margin-bottom: 10px;"><strong>Ngày khởi hành: ${startDate}</strong></li>
+                        <li style="margin-bottom: 10px;"><strong>Số lượng người: ${totalPassenger}</strong> </li>
+                        <li style="margin-bottom: 10px;"><strong>Tổng số tiền đã thanh toán:</strong>  ${totalPrice.toLocaleString('vi-VN')} VND</li>
+                        <li style="margin-bottom: 10px;"><strong>Phương thức thanh toán:</strong>  ${totalPrice.toLocaleString('vi-VN')} VND</li>
+                        <li style="margin-bottom: 10px;"><strong>Ngày thanh toán:</strong>  ${totalPrice.toLocaleString('vi-VN')} VND</li>
+                    </ul>
+                    
+                    <div style="background-color: #f0f0f0; border-left: 4px solid #003366; padding: 15px; margin: 20px 0;">
+                        <h3 style="color: #003366; margin-top: 0;">Trạng thái đơn đặt tour: Đã thanh toán</h3>
+                        <p style="margin-bottom: 0;">Cảm ơn bạn đã hoàn tất thanh toán. Tour của bạn đã được xác nhận.</p>
+                    </div>
+                    
+                    <h2 style="color: #003366; border-bottom: 2px solid #003366; padding-bottom: 10px;">Các bước tiếp theo:</h2>
+                    <ol style="padding-left: 20px;">
+                        <li style="margin-bottom: 10px;">Chúng tôi sẽ gửi cho bạn một email khác chứa thông tin chi tiết về lịch trình và hướng dẫn cho chuyến đi trong vòng [X] ngày tới.</li>
+                        <li style="margin-bottom: 10px;">Vui lòng kiểm tra kỹ thông tin cá nhân và yêu cầu đặc biệt (nếu có) trong email xác nhận đặt tour trước đó.</li>
+                        <li style="margin-bottom: 10px;">Nếu bạn cần thay đổi bất kỳ thông tin nào, vui lòng liên hệ với chúng tôi ít nhất [X] ngày trước ngày khởi hành.</li>
+                    </ol>
+                        
+                    <div style="background-color: #e6f3ff; border: 1px solid #003366; padding: 15px; margin: 20px 0;">
+                        <h3 style="color: #003366; margin-top: 0;">Thông tin liên hệ:</h3>
+                        <p style="margin-bottom: 5px;">Điện thoại: (+84) 886 008 377</p>
+                        <p style="margin-bottom: 0;">Email: Hdt13102k3@gmail.com</p>
+                    </div>
+                </main>
+                
+                <footer style="background-color: #003366; color: #ffffff; padding: 20px; text-align: center; font-size: 14px;">
+                    <p style="margin: 0;">Trân trọng,</p>
+                    <p style="margin: 5px 0 0;">Hoàng Đức Tài</p>
+                </footer>
+            </body>
+        `
+        break
     }
     await transporter.sendMail({
         from: process.env.EMAIL_USER,
@@ -189,7 +242,7 @@ const sendEmailHandleBooking = async (email, status, bookingDetails) => {
         html
     })
 }
-const sendStatusEmail = async (email, status, booking) => {
+export const sendStatusEmail = async (email, status, booking) => {
     const bookingCode = booking.booking_code;
     const tourName = booking.bookingTourChild.tour.name
     const startDate = booking.bookingTourChild.start_date;

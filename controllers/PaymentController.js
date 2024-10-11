@@ -1,6 +1,11 @@
 import crypto from "crypto";
 import querystring from "qs";
+import Booking from "../models/Booking.js";
+import { sendEmailHandleBooking } from "./BookingController.js";
 
+const vnp_TmnCode = process.env.VNP_TMNCODE;
+const vnp_HashSecret = process.env.VNP_HASHSECRET;
+const vnp_Url = process.env.VNP_URL;
 export const createVNPayPaymentUrl = (booking_code, total_price, req) => {
     const date = new Date();
     const createDate = date.toISOString().replace(/[-:T.]/g, '').slice(0, 14);
@@ -10,14 +15,11 @@ export const createVNPayPaymentUrl = (booking_code, total_price, req) => {
         req.socket.remoteAddress ||
         req.connection.socket.remoteAddress;
 
-    const vnp_TmnCode = process.env.VNP_TMNCODE;
-    const vnp_HashSecret = process.env.VNP_HASHSECRET;
-    const vnp_Url = process.env.VNP_URL;
     const vnp_ReturnUrl = `http://localhost:3000/payment-booking/${booking_code}`;
 
     const orderId = date.getTime(); 
     const amount = total_price * 100; 
-    const orderInfo = `Payment for booking ${booking_code}`; 
+    const orderInfo = `Thanh toán booking ${booking_code}`; 
 
     const currCode = 'VND';
     let vnp_Params = {};
@@ -60,5 +62,46 @@ const sortObject = (obj) => {
     }
     return sorted;
 }
+  
+export const handleVNPayReturn = async (req, res) => {
+    const vnpParams = req.query; 
+    const secureHash = vnpParams['vnp_SecureHash']; 
+    delete vnpParams['vnp_SecureHash']; 
+
+    const sortedParams = sortObject(vnpParams); 
+    const secretKey = process.env.VNPAY_SECRET_KEY; 
+    const signData = querystring.stringify(sortedParams, { encode: false });
+    const hmac = crypto.createHmac("sha512", secretKey);
+    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex");
+
+    if (secureHash === signed) {
+        const bookingCode = vnpParams['vnp_TxnRef']; 
+        const paymentStatus = vnpParams['vnp_ResponseCode']; 
+
+        if (paymentStatus === '00') {
+            await Booking.update({status: "Đã thanh toán"}, {where: {booking_code: bookingCode}})
+
+            const bookingDetails = await Booking.findOne({where: {booking_code: bookingCode}})
+            
+            await sendEmailHandleBooking(bookingDetails.email, bookingDetails.status, bookingDetails)
+
+            return res.status(200).json({
+                success: true,
+                message: "Thanh toán thành công, đã gửi email thông báo!",
+                data: bookingDetails
+            });
+        } else {
+            return res.status(400).json({
+                success: false,
+                message: "Thanh toán không thành công, vui lòng thử lại."
+            });
+        }
+    } else {
+        return res.status(400).json({
+            success: false,
+            message: "Chữ ký không hợp lệ, giao dịch bị từ chối."
+        });
+    }
+};
 
 
