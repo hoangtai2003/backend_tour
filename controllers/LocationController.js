@@ -1,16 +1,18 @@
 import Location from '../models/Location.js'
-
+import { createSlug } from '../utils/slug.js';
 // create new location
 export const createLocation = async(req, res) => {
     const {name, description, parent_id, status} = req.body
     const location_img = req.files;
+    const loca_slug = createSlug(name)
     try {
         const newLocation = await Location.create({
             name,
             description,
             parent_id: parent_id || 0,
             location_img: `http://localhost:4000/images/locations/${location_img[0].filename}`,
-            status
+            status,
+            loca_slug
         })
 
         const locationWithRelations = await Location.findByPk(newLocation.id, {
@@ -36,6 +38,7 @@ export const updateLocation = async(req, res) => {
     const { id }= req.params
     const {name, description, parent_id, status} = req.body
     const location_img = req.files;
+    const loca_slug = createSlug(name)
     try {
         const locationToUpdate = await Location.findByPk(id)
         if(!locationToUpdate){
@@ -45,7 +48,8 @@ export const updateLocation = async(req, res) => {
             name,
             description,
             parent_id: parent_id || locationToUpdate.parent_id,
-            status
+            status,
+            loca_slug
         }
         if (location_img && location_img.length > 0) {
             updateData.location_img = `http://localhost:4000/images/locations/${location_img[0].filename}`;

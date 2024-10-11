@@ -7,6 +7,7 @@ import TourImage from "../models/TourImage.js"
 import { Op, where } from 'sequelize';
 import Booking from '../models/Booking.js';
 import Sequelize from 'sequelize';
+import { createSlug } from '../utils/slug.js';
 export const createTour = async (req, res) => {
     const { 
         name, 
@@ -20,7 +21,7 @@ export const createTour = async (req, res) => {
         transportation
     } = req.body;
 
-   
+    const tour_slug = createSlug(name)
     const tour_images = req.files;
 
     try {
@@ -50,7 +51,8 @@ export const createTour = async (req, res) => {
             departure_city, 
             introduct_tour,
             transportation,
-            program_code: generateProgramCode()
+            program_code: generateProgramCode(),
+            tour_slug
         });
 
         // Create tour children
@@ -122,6 +124,7 @@ export const updateTour = async (req, res) => {
         tour_children
     } = req.body;
     const tour_images = req.files;
+    const tour_slug = createSlug(name)
     try {
         const locations = JSON.parse(location_ids || '[]');
         const children = JSON.parse(tour_children || '[]');
@@ -143,7 +146,8 @@ export const updateTour = async (req, res) => {
             departure_city, 
             tour_images, 
             introduct_tour,
-            transportation
+            transportation,
+            tour_slug
         });
 
         if (children && Array.isArray(children)) {

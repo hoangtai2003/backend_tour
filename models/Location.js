@@ -25,6 +25,9 @@ const Location = sequelize.define('Location', {
     status: {
         type: DataTypes.ENUM("Hiển thị", "Không hiển thị"),
         allowNull: true
+    },
+    loca_slug: {
+        type:  DataTypes.TEXT,
     }
 }, {
     timestamps: true,

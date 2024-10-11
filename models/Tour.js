@@ -41,6 +41,9 @@ const Tour = sequelize.define('Tour',{
     transportation: {
         type:  DataTypes.STRING,
         allowNull: false
+    },
+    tour_slug: {
+        type:  DataTypes.TEXT,
     }
 },
     { 
