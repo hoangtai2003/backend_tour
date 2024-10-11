@@ -1,3 +1,4 @@
+import { Op } from 'sequelize'
 import Category from '../models/Category.js'
 import News from '../models/News.js'
 import { createSlug } from '../utils/slug.js'
@@ -115,6 +116,49 @@ export const getALlNews = async(req, res) => {
                     as: 'newsCate',
                     attributes: ['cate_name']
 
+                }
+            ]
+        })
+        res.status(200).json({
+            success: true, 
+            count: count,
+            totalPages: Math.ceil(count / limit),
+            currentPage: page,  
+            message:'', 
+            data: rows
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Đã có lỗi xảy ra !',
+            error: error.message
+        });
+    }
+}
+export const paginationNews = async(req, res) => {
+    const { cate_name } = req.query
+    const page = parseInt(req.query.page) || 1;
+    const limit = 5
+    const offset = (page - 1) * limit
+    let cateNameCondition = {}
+    try {
+        if (cate_name){
+            cateNameCondition = {
+                cate_name: {
+                    [Op.eq]: cate_name
+                }
+            }
+        }
+        const {count, rows} = await News.findAndCountAll({
+            limit,
+            offset,
+            distinct: true,
+            include: [
+                {
+                    model: Category,
+                    as: 'newsCate',
+                    attributes: ['id', 'cate_name'],
+                    where: cateNameCondition
                 }
             ]
         })

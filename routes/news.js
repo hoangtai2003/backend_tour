@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { createNews, deleteNews, editNews, getALlNews, getSingleNews, getNewsBySlug } from '../controllers/NewsController.js';
+import { createNews, deleteNews, editNews, getALlNews, getSingleNews, getNewsBySlug, paginationNews } from '../controllers/NewsController.js';
 
 const router = express.Router();
 
@@ -33,4 +33,5 @@ router.get('/', getALlNews)
 router.get('/:slug', getNewsBySlug)
 router.get('/singleNews/:id', getSingleNews)
 router.delete('/:id', deleteNews)
+router.get('/pagination/newsletter', paginationNews)
 export default router;
