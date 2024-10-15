@@ -1,13 +1,13 @@
 import Tour from '../models/Tour.js'
-import { v4 as uuidv4 } from 'uuid';
 import TourChild from '../models/TourChild.js';
 import TourLocation from '../models/TourLocation.js';
 import Location from '../models/Location.js';
 import TourImage from "../models/TourImage.js"
-import { Op, where } from 'sequelize';
+import { Op } from 'sequelize';
 import Booking from '../models/Booking.js';
 import Sequelize from 'sequelize';
 import { createSlug } from '../utils/slug.js';
+import { generateProgramCode, generateTourCode } from '../utils/generateCode.js';
 export const createTour = async (req, res) => {
     const { 
         name, 
@@ -23,7 +23,7 @@ export const createTour = async (req, res) => {
 
     const tour_slug = createSlug(name)
     const tour_images = req.files;
-
+    const programCode = generateProgramCode()
     try {
         
         const locations = JSON.parse(location_ids || '[]');
@@ -51,16 +51,17 @@ export const createTour = async (req, res) => {
             departure_city, 
             introduct_tour,
             transportation,
-            program_code: generateProgramCode(),
+            program_code: programCode,
             tour_slug
         });
 
         // Create tour children
         if (children && Array.isArray(children)) {
             const tourChildPromises = children.map(child => {
+                const tourCode = generateTourCode(child.start_date)
                 return TourChild.create({
                     tour_id: newTour.id,
-                    tour_code: generateTourCode(child.start_date), 
+                    tour_code: tourCode, 
                     ...child
                 });
             });
@@ -235,23 +236,6 @@ export const updateTour = async (req, res) => {
             error: err.message 
         });
     }
-};
-
-// Helper function to generate tour_code
-const generateTourCode = (startDate) => {
-    const tourCodePrefix = "NDSGN";
-    const uniqueId = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    const formattedDate = new Date(startDate).toISOString().slice(0, 10).split('-').reverse().join('').slice(0, 6);
-    const tourCodeSuffix = uuidv4().slice(0, 2).toUpperCase();
-    return `${tourCodePrefix}${uniqueId}-${formattedDate}${tourCodeSuffix}-H`;
-};
-const generateProgramCode = () => {
-    const randomNumbers = Array(3).fill().map(() => Math.floor(Math.random() * 10)).join('');
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const randomLetters = Array(5).fill().map(() => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
-    const programCode =randomLetters + randomNumbers;
-
-    return programCode;
 };
 
 // delete tour
@@ -600,7 +584,7 @@ export const getCountToursByLocation = async (req, res) => {
                 {
                     model: Location,
                     as: 'location',
-                    attributes: ['name', 'location_img', 'status'] 
+                    attributes: ['name', 'location_img', 'loca_slug'] 
                 }
             ],
         });

@@ -6,6 +6,7 @@ import Tour from "../models/Tour.js";
 import nodemailer from 'nodemailer'
 import TourImage from "../models/TourImage.js";
 import { createVNPayPaymentUrl } from "./PaymentController.js";
+import { generateBookingCode } from "../utils/generateCode.js";
 export const createBooking = async (req, res) => {
     const {
         tour_child_id,
@@ -20,6 +21,7 @@ export const createBooking = async (req, res) => {
         payment_method
     } = req.body;
     const passengers = JSON.parse(booking_passenger || '[]')
+    const bookingCode = generateBookingCode()
     try {
 
         const tourChild  = await TourChild.findByPk(tour_child_id, {
@@ -60,7 +62,7 @@ export const createBooking = async (req, res) => {
             address: address || user.address,
             booking_note,
             status,
-            booking_code: generateBookingCode(),
+            booking_code: bookingCode,
             payment_method
         })
         const bookingDetails = {
@@ -105,14 +107,6 @@ export const createBooking = async (req, res) => {
             error: error.message,
         });
     }
-};
-const generateBookingCode = () => {
-    const randomNumbers = Array(8).fill().map(() => Math.floor(Math.random() * 10)).join('');
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const randomLetters = Array(4).fill().map(() => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
-    const bookingCode = randomNumbers + randomLetters;
-
-    return bookingCode;
 };
 const transporter = nodemailer.createTransport({
     service: 'gmail',
