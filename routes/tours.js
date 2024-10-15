@@ -31,16 +31,29 @@ router.post('/', upload.array('tour_image', 10), createTour);
 
 
 router.put('/:id', upload.array('tour_image', 10), updateTour);
+
 router.delete('/:id', deleteTour);
+
 router.get('/:id', getSingleTour);
+
 router.get('/', getAllTour);
+
 router.get('/:id/related', getRelatedTours)
+
 router.get('/:location_id/count', getCountTourRelated)
+
 router.get('/tourByLocation/countTour', getCountToursByLocation)
+
 router.get('/:tourCode/booking', getTourByTourCode)
+
 router.get('/price/filter-price', getTourFilterPrice)
+
 router.get('/price/filter-sortPrice', getFilterSortPrice)
+
 router.get('/search/filter-tour', getFilterTour)
+
 router.get('/search/search-tour', getSearchTour)
+
 router.get('/all-tour/tourNameLocation', getTourByNameLocation)
+
 export default router;

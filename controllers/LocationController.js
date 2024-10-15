@@ -1,10 +1,14 @@
 import Location from '../models/Location.js'
 import { createSlug } from '../utils/slug.js';
+import Tour from '../models/Tour.js';
+import TourChild from '../models/TourChild.js';
+import TourImage from '../models/TourImage.js';
+import TourLocation from '../models/TourLocation.js';
 // create new location
 export const createLocation = async(req, res) => {
     const {name, description, parent_id, status} = req.body
     const location_img = req.files;
-    const loca_slug = createSlug(name)
+    const loca_slug = createSlug(`Du lịch ${name}`)
     try {
         const newLocation = await Location.create({
             name,
@@ -38,7 +42,7 @@ export const updateLocation = async(req, res) => {
     const { id }= req.params
     const {name, description, parent_id, status} = req.body
     const location_img = req.files;
-    const loca_slug = createSlug(name)
+    const loca_slug = createSlug(`Du lịch ${name}`)
     try {
         const locationToUpdate = await Location.findByPk(id)
         if(!locationToUpdate){
@@ -163,5 +167,48 @@ export const getAllLocation = async (req, res) => {
         res.status(200).json({ success: true, message: 'Successfully fetched location', data: locations });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Failed to fetch location' });
+    }
+}
+
+export const getLocationBySlug = async(req, res) => {
+    const { slug } = req.params
+    try {
+
+        const location = await Location.findOne({
+            where: {
+                loca_slug: slug
+            },
+            attributes: ['name', 'description', 'loca_slug'],
+            include: [
+                { model: Location, as: 'parent'},
+                { model: Location, as: 'children'},
+                {
+                    model: Tour,
+                    as: 'tours',
+                    include: [
+                        {
+                            model: TourChild,
+                            as: 'tourChildren'
+                        },
+                        {
+                            model: TourImage,
+                            as: 'tourImage'
+                        }
+                    ]
+                },
+            ],
+        })
+        const tourCount = await TourLocation.count({
+            include: [
+                {
+                    model: Location,
+                    as: 'location',
+                    where: { loca_slug: slug },
+                },
+            ],
+        });
+        res.status(200).json({ success: true, message: '', data: { location, total_tours: tourCount }, });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Không tìm thấy địa điểm. Vui lòng thử lại.' });
     }
 }

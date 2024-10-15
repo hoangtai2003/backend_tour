@@ -1,5 +1,5 @@
 import express from 'express'
-import { createLocation, deleteLocation, getAllLocation, getAllLocationPagination, getSingleLocation, updateLocation } from '../controllers/LocationController.js'
+import { createLocation, deleteLocation, getAllLocation, getAllLocationPagination, getLocationBySlug, getSingleLocation, updateLocation } from '../controllers/LocationController.js'
 import multer from 'multer'
 
 const router = express.Router()
@@ -42,4 +42,6 @@ router.get('/:id', getSingleLocation)
 router.get('/', getAllLocationPagination)
 
 router.get('/all/getAllLocation', getAllLocation)
+
+router.get('/slug-location/:slug', getLocationBySlug)
 export default router

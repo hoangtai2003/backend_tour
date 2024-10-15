@@ -27,7 +27,7 @@ const Location = sequelize.define('Location', {
         allowNull: true
     },
     loca_slug: {
-        type:  DataTypes.TEXT,
+        type: DataTypes.TEXT,
     }
 }, {
     timestamps: true,
