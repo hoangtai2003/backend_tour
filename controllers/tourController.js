@@ -327,6 +327,70 @@ export const getSingleTour = async (req, res) => {
     }
 }
 
+export const getTourBySlug = async (req, res) => {
+    const { slug } = req.params
+    try {
+        const tour = await Tour.findOne({
+            where: {
+                tour_slug: slug
+            },
+            include: 
+            [
+                {
+                    model: TourChild,
+                    as: 'tourChildren',
+                    attributes: 
+                    [
+                        'id', 
+                        "tour_id",
+                        'tour_code', 
+                        'start_date', 
+                        'end_date', 
+                        'price_adult', 
+                        'price_child', 
+                        'total_seats', 
+                        'price_sale',
+                        'price_toddler',
+                        'price_baby',
+                        'transportion_start',
+                        'transportion_end',
+                        'time_goes_start',
+                        'time_comes_start',
+                        'time_goes_end',
+                        'time_comes_end',
+                        [
+                            Sequelize.literal(`(
+                                SELECT COUNT(*)
+                                FROM booking AS b
+                                WHERE 
+                                    b.tour_child_id = tourChildren.id
+                                    AND b.status = 'Đã thanh toán'
+                            )`),
+                            'confirmedBookingCount' 
+                        ]
+                    ]
+                },
+                {
+                    model: Location,
+                    as: 'locations',
+                    attributes: ['name', 'loca_slug'],
+                    include: [
+                        { model: Location, as: 'parent' },
+                        { model: Location, as: 'children' } 
+                    ]
+                },
+                {
+                    model: TourImage,
+                    as:'tourImage',
+                    attributes: ['image_url']
+                }
+            ] 
+        })
+        res.status(200).json({success:true, message: "Successfully", data: tour})
+    } catch(err) {
+        res.status(500).json({success:false, message:'Not Found'})
+    }
+}
 // get all tour
 
 export const getAllTour = async (req, res) => {
@@ -410,14 +474,17 @@ export const getAllTour = async (req, res) => {
 };
 
 export const getRelatedTours = async (req, res) => {
-    const tourId = req.params.id;
+    const { slug } = req.params;
     try {
         // Tìm tour hiện tại
-        const currentTour = await Tour.findByPk(tourId, {
+        const currentTour = await Tour.findOne({
+            where: {
+                tour_slug: slug
+            },
             include: [
                 {
                     model: Location,
-                    as: 'locations',  // Lấy các địa điểm của tour hiện tại
+                    as: 'locations',  
                     attributes: ['id', 'name']
                 }
             ]
@@ -446,25 +513,6 @@ export const getRelatedTours = async (req, res) => {
                 {
                     model: TourChild,
                     as: 'tourChildren',
-                    attributes: 
-                    [
-                        'id', 
-                        'tour_code', 
-                        'start_date', 
-                        'end_date', 
-                        'price_adult', 
-                        'price_child', 
-                        'total_seats', 
-                        'price_sale',
-                        'price_toddler',
-                        'price_baby',
-                        'transportion_start',
-                        'transportion_end',
-                        'time_goes_start',
-                        'time_comes_start',
-                        'time_goes_end',
-                        'time_comes_end'
-                    ]
                 },
                 {
                     model: TourImage,
@@ -473,7 +521,7 @@ export const getRelatedTours = async (req, res) => {
                 }
             ],
             where: {
-                id: { [Op.ne]: tourId }  // Loại trừ tour hiện tại
+                tour_slug: { [Op.ne]: slug }  // Loại trừ tour hiện tại
             },
             distinct: true  // Đảm bảo các tour không bị trùng lặp
         });
@@ -553,6 +601,7 @@ export const getCountTourRelated = async (req, res) => {
                     model: Location,
                     as: 'location',
                     attributes: ['name', 'location_img', 'parent_id', 'description', 'status']
+                    
                 }
             ]
         });
