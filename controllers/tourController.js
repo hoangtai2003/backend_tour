@@ -122,7 +122,8 @@ export const updateTour = async (req, res) => {
         introduct_tour,
         transportation, 
         location_ids,
-        tour_children
+        tour_children,
+        program_code
     } = req.body;
     const tour_images = req.files;
     const tour_slug = createSlug(name)
@@ -148,7 +149,8 @@ export const updateTour = async (req, res) => {
             tour_images, 
             introduct_tour,
             transportation,
-            tour_slug
+            tour_slug,
+            program_code
         });
 
         if (children && Array.isArray(children)) {

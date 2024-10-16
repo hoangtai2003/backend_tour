@@ -417,12 +417,12 @@ export const getBooking = async(req, res) => {
                 {
                     model: TourChild,
                     as: 'bookingTourChild',
-                    attributes: ['tour_id', 'tour_code', 'price_adult', 'price_child', 'price_toddler', 'price_baby'],
+                    attributes: ['tour_id', 'tour_code', 'price_adult', 'price_child', 'price_toddler', 'price_baby', 'end_date'],
                     include: [
                         {
                             model: Tour,
                             as : "tour",
-                            attributes: ['name', 'departure_city', 'duration'],
+                            attributes: ['name', 'departure_city', 'duration', 'id'],
                             include: [
                                 {
                                     model: TourImage,

@@ -1,28 +1,54 @@
-import mongoose from "mongoose";
-
-const reviewSchema = new mongoose.Schema(
-  {
-    productId: {
-      type: mongoose.Types.ObjectId,
-      ref: "Tour",
+import { DataTypes } from "sequelize";
+import sequelize from "../sequelize.js";
+import Tour from "./Tour.js";
+import User from "./User.js";
+const Reviews = sequelize.define("Reviews",{
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        allowNull: false,
+        autoIncrement: true
     },
-    username: {
-      type: String,
-      required: true,
+    tour_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: Tour,
+            key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
     },
-    reviewText: {
-      type: String,
-      required: true,
+    user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: User,
+            key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
     },
-    rating: {
-      type: Number,
-      required: true,
-      min: 0,
-      max: 5,
-      default: 0,
+    review_comment: {
+        type: DataTypes.TEXT,
+        allowNull: false,
     },
-  },
-  { timestamps: true }
+    review_rating: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
+    review_date: {
+        type: DataTypes.DATE
+    },
+    review_status: {
+        type: DataTypes.STRING,
+        default: 'reviewed'
+    }
+},
+{ 
+    timestamps: true,
+    tableName: 'reviews'
+}
 );
 
-export default mongoose.model("Review", reviewSchema);
+export default Reviews

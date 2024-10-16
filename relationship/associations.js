@@ -8,6 +8,7 @@ import Booking from "../models/Booking.js";
 import Passenger from "../models/Passenger.js";
 import Category from "../models/Category.js";
 import News from "../models/News.js";
+import Review from "../models/Review.js";
 
 
 // Relationship one to many between Tour and TourChild
@@ -38,3 +39,10 @@ Passenger.belongsTo(Booking, {foreignKey: 'booking_id', as: 'passengerBooking'})
 // Relationship categories, news
 Category.hasMany(News, {foreignKey: 'cate_id', as: 'cateNews'})
 News.belongsTo(Category, {foreignKey: 'cate_id', as: 'newsCate'})
+
+// Relationship review user and tour
+User.hasMany(Review, {foreignKey: 'user_id', as: 'userReviews'})
+Review.belongsTo(User, {foreignKey: 'user_id', as: 'reviewsUser'})
+
+Tour.hasMany(Review, {foreignKey: 'tour_id', as: 'tourReviews'})
+Review.belongsTo(Tour, {foreignKey: 'tour_id', as: 'reviewsTour'})
