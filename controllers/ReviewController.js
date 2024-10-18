@@ -80,12 +80,25 @@ export const getAllReview = async (req, res) => {
                 {
                     model: User,
                     as: 'reviewsUser',
-                    attributes: ['username']
+                    attributes: ['username', 'email']
                 }
             ]
         })
         res.status(200).json({success: true, message:"", data: review})
     } catch (error) {
         res.status(500).json({success: false, message:"Có lỗi xảy ra. Vui lòng thử lại!"})
+    }
+}
+
+export const editStatus = async(req, res) => {
+    const { id } = req.params
+    const { status } = req.body
+    try {
+        const review = await Review.findByPk(id)
+
+        await review.update({ status });
+        res.status(200).json({ success: true, message: 'Cập nhật thành công!' });
+    } catch (error) {
+        res.status(500).json({ success: false, error, message: 'Có lỗi xảy ra. Vui lòng thử lại !' });
     }
 }

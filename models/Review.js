@@ -43,6 +43,10 @@ const Reviews = sequelize.define("Reviews",{
     review_status: {
         type: DataTypes.STRING,
         default: 'reviewed'
+    },
+    status: {
+        type: DataTypes.ENUM('Hiển thị', 'Không hiển thị'),
+        default: "Hiển thị"
     }
 },
 { 
