@@ -31,7 +31,7 @@ const User = sequelize.define('User', {
         defaultValue: "Hoạt động"
     },
     gender: {
-        type: DataTypes.STRING,
+        type: DataTypes.ENUM("Nam", "Nữ"),
         defaultValue: "Nam"
     },
     dateBirthday: {
