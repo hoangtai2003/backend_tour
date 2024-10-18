@@ -75,7 +75,7 @@ export const statisticalTour = async(req, res) => {
                 }
             ],
             where: {
-                status: "Chờ xác nhận"
+                status: "Đã thanh toán"
             },
             group: ['bookingTourChild.tour_id'],
             raw: true

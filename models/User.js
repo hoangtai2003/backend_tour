@@ -23,13 +23,12 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
     },
     role: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 1,
+        type: DataTypes.ENUM,
+        type: DataTypes.ENUM('Administrator', 'Nhân viên', 'Khách hàng'),
     },
     status: {
-        type: DataTypes.STRING,
-        defaultValue: 0
+        type: DataTypes.ENUM('Hoạt động', 'Ngừng hoạt động'),
+        defaultValue: "Hoạt động"
     },
     gender: {
         type: DataTypes.STRING,
