@@ -2,7 +2,7 @@ import User from '../models/User.js'
 import bcrypt from 'bcrypt'
 export const createUser = async (req, res) => {
     try {
-        const { username, email, password, phone, status, role } = req.body;
+        const { username, email, password, phone, status, role_id } = req.body;
 
         if (!password) {
             return res.status(400).json({ success: false, message: 'Password is required' });
@@ -17,11 +17,12 @@ export const createUser = async (req, res) => {
             password: hash,
             phone,
             status,
-            role
+            role_id
         });
 
         res.status(200).json({ success: true, message: 'Successfully created', data: newUser });
     } catch (err) {
+        console.log(errror)
         res.status(500).json({ success: false, message: 'Failed to create. Try again', error: err.message });
     }
 };
@@ -30,7 +31,7 @@ export const createUser = async (req, res) => {
 // update user 
 export const updateUser = async (req, res) => {
     const id = req.params.id;
-    const { username, email, currentPassword, newPassword, confirmPassword, phone, status, role, dateBirthday, gender, address } = req.body;
+    const { username, email, currentPassword, newPassword, confirmPassword, phone, status, role_id, dateBirthday, gender, address } = req.body;
 
     try {
         
@@ -61,7 +62,7 @@ export const updateUser = async (req, res) => {
             email,
             phone,
             status,
-            role,
+            role_id,
             dateBirthday,
             gender,
             address
@@ -73,8 +74,6 @@ export const updateUser = async (req, res) => {
         res.status(500).json({ success: false, message: 'Failed to update. Try again' });
     }
 };
-
-
 
 // delete user 
 export const deleteUser = async(req, res) => {

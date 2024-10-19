@@ -1,7 +1,23 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../sequelize.js';
+import Roles from './Roles.js';
 
 const User = sequelize.define('User', {
+    id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+        allowNull: false
+    },
+    role_id: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: Roles,
+            key: "id"
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+    },
     username: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -14,17 +30,13 @@ const User = sequelize.define('User', {
     },
     password: {
         type: DataTypes.STRING,
-        allowNull: true, 
+        allowNull: false, 
     },
     phone: {
         type: DataTypes.STRING,
     },
     address: {
         type: DataTypes.STRING,
-    },
-    role: {
-        type: DataTypes.ENUM,
-        type: DataTypes.ENUM('Administrator', 'Nhân viên', 'Khách hàng'),
     },
     status: {
         type: DataTypes.ENUM('Hoạt động', 'Ngừng hoạt động'),
