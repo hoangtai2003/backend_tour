@@ -4,6 +4,9 @@ import jwt from 'jsonwebtoken'
 import validator from "validator";
 import passport from "passport";
 import GoogleStrategy from 'passport-google-oauth20'
+import Roles from "../models/Roles.js";
+import RolePermissions from "../models/RolePermissions.js";
+import Permissions from "../models/Permissions.js";
 export const login = async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -70,12 +73,29 @@ const createToken = (id) => {
 export const user = async (req, res) => {
     const id  = req.user.id
     try {
-        const user = await User.findByPk(id); 
+        const user = await User.findByPk(id, {
+            include: [
+                {
+                    model: Roles,
+                    as: 'userRole',
+                    attributes: ['name'],
+                    include: [
+                        {
+                            model: Permissions,
+                            as: 'rolePermission',
+                            through: { attributes: [] },
+                            attributes: ['name', 'slug']
+                        }
+                    ]
+                }
+            ]
+        }); 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
         res.json({ data: user });
     } catch (error) {
+        console.log(error)
         res.status(500).json({ message: 'Error fetching user data' });
     }
 }

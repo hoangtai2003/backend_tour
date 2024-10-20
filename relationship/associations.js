@@ -9,6 +9,9 @@ import Passenger from "../models/Passenger.js";
 import Category from "../models/Category.js";
 import News from "../models/News.js";
 import Review from "../models/Review.js";
+import Roles from "../models/Roles.js";
+import Permissions from "../models/Permissions.js";
+import RolePermissions from "../models/RolePermissions.js";
 
 
 // Relationship one to many between Tour and TourChild
@@ -46,3 +49,14 @@ Review.belongsTo(User, {foreignKey: 'user_id', as: 'reviewsUser'})
 
 Tour.hasMany(Review, {foreignKey: 'tour_id', as: 'tourReviews'})
 Review.belongsTo(Tour, {foreignKey: 'tour_id', as: 'reviewsTour'})
+
+
+// Relationship role, permissions, role_permissions, users
+Roles.belongsToMany(Permissions, { through: RolePermissions, foreignKey: 'role_id', as: 'rolePermission'})
+Permissions.belongsToMany(Roles, { through: RolePermissions, foreignKey: 'permission_id', as: 'permissionRole'})
+
+RolePermissions.belongsTo(Roles, {foreignKey: 'role_id', as: 'role'})
+RolePermissions.belongsTo(Permissions, { foreignKey: 'permission_id', as: 'permission'})
+
+Roles.hasMany(User, { foreignKey: 'role_id', as: 'roleUser'})
+User.belongsTo(Roles, { foreignKey: 'role_id', as: 'userRole'})

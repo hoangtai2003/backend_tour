@@ -17,6 +17,8 @@ import paymentRoute from './routes/payment.js'
 import categoryRoute from './routes/category.js'
 import newsRoute from './routes/news.js'
 import dashboardRoute from './routes/dashboard.js'
+import roleRoute from './routes/role.js'
+
 // Nạp các biến từ file .env vào process.env 
 dotenv.config()
 const app = express()
@@ -60,6 +62,7 @@ app.use('/api/v1/category', categoryRoute)
 app.use('/api/v1/news', newsRoute)
 app.use('/', paymentRoute)
 app.use('/api/v1/dashboard', dashboardRoute)
+app.use('/api/v1/role', roleRoute)
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
