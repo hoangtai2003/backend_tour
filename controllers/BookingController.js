@@ -34,7 +34,6 @@ export const createBooking = async (req, res) => {
                 }
             ]
         })
-        const user = await User.findByPk(user_id)
         const number_of_adults = parseInt(req.body.number_of_adults, 10);
         const number_of_children = parseInt(req.body.number_of_children, 10);
         const number_of_toddler = parseInt(req.body.number_of_toddler, 10);
@@ -42,10 +41,10 @@ export const createBooking = async (req, res) => {
         const total_price = parseInt(req.body.total_price, 10);
 
         const totalPassenger = number_of_adults + number_of_children + number_of_toddler + number_of_baby
-        if (!tourChild || !user) {
+        if (!tourChild) {
             return res.status(404).json({
                 success: false,
-                message: 'TourChild or User not found',
+                message: 'TourChild  not found',
             })
         }
         const newBooking = await Booking.create({
