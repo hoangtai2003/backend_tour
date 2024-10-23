@@ -18,6 +18,7 @@ import categoryRoute from './routes/category.js'
 import newsRoute from './routes/news.js'
 import dashboardRoute from './routes/dashboard.js'
 import roleRoute from './routes/role.js'
+import contactRoute from "./routes/contact.js"
 
 // Nạp các biến từ file .env vào process.env 
 dotenv.config()
@@ -63,6 +64,7 @@ app.use('/api/v1/news', newsRoute)
 app.use('/', paymentRoute)
 app.use('/api/v1/dashboard', dashboardRoute)
 app.use('/api/v1/role', roleRoute)
+app.use('/api/v1/contact', contactRoute)
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);

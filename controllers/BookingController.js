@@ -1,7 +1,6 @@
 import Booking from "../models/Booking.js"
 import Passenger from "../models/Passenger.js";
 import TourChild from "../models/TourChild.js";
-import User from "../models/User.js";
 import Tour from "../models/Tour.js";
 import nodemailer from 'nodemailer'
 import TourImage from "../models/TourImage.js";
