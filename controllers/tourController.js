@@ -1038,8 +1038,28 @@ export const getTourChildBySale = async (req, res) => {
     }
 };
 
-
-
-
-
-
+export const getDetailTourByTourCode = async(req, res) => {
+    const { slug } = req.params
+    const { tourCode } = req.query
+    try {
+        const tourDetail = await TourChild.findOne({
+            where: { tour_code: tourCode },
+            include: [
+                {
+                    model: Tour,
+                    as: 'tour',
+                    where: { tour_slug: slug }
+                }
+            ]
+        })
+        return res.status(200).json({
+            success: true,
+            data: tourDetail
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        })
+    }
+}
