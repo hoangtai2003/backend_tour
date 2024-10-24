@@ -7,6 +7,7 @@ import { Op } from 'sequelize';
 import Booking from '../models/Booking.js';
 import Sequelize from 'sequelize';
 import { createSlug } from '../utils/slug.js';
+import moment from 'moment';
 import { generateProgramCode, generateTourCode } from '../utils/generateCode.js';
 export const createTour = async (req, res) => {
     const { 
@@ -588,7 +589,6 @@ export const getTourByTourCode = async (req, res) => {
     }
 };
 
-
 export const getCountTourRelated = async (req, res) => {
     const { location_id } = req.params; 
 
@@ -981,6 +981,62 @@ export const getTourByNameLocation = async(req, res) => {
         });
     }
 }
+export const getTourChildBySale = async (req, res) => {
+    try {
+        const currentDate = moment().format('YYYY-MM-DD'); 
+        const tourChildBySale = await TourChild.findAll({
+            where: {
+                price_sale: {
+                    [Op.gt]: 0 
+                },
+                start_date: {
+                    [Op.gt]: currentDate
+                }
+            },
+            attributes: [
+                'tour_code',
+                'start_date',
+                'price_sale',
+                'total_seats',
+                [
+                    Sequelize.literal(`(
+                        SELECT COUNT(*)
+                        FROM booking AS b
+                        WHERE 
+                            b.tour_child_id = TourChild.id
+                            AND b.status = 'Đã thanh toán'
+                    )`),
+                    'confirmedBookingCount' 
+                ]
+            ],
+            include: [
+                {
+                    model: Tour,
+                    as: 'tour',
+                    attributes: ['name', 'duration', 'departure_city', 'price', 'tour_slug'],
+                    include: [
+                        {
+                            model: TourImage,
+                            as: 'tourImage',
+                            attributes: ['image_url']
+                        }
+                    ]
+                }
+            ]
+        });
+
+        return res.status(200).json({
+            success: true,
+            data: tourChildBySale
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
 
 
 
