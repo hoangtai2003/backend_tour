@@ -19,6 +19,7 @@ import newsRoute from './routes/news.js'
 import dashboardRoute from './routes/dashboard.js'
 import roleRoute from './routes/role.js'
 import contactRoute from "./routes/contact.js"
+import hotelRoute from "./routes/hotel.js"
 
 // Nạp các biến từ file .env vào process.env 
 dotenv.config()
@@ -42,6 +43,7 @@ app.use(cookieParser())
 app.use('/images/tours', express.static('images/tours'));
 app.use('/images/locations', express.static('images/locations'))
 app.use('/images/news', express.static('images/news'))
+app.use('/images/hotel', express.static('images/hotel'))
 
 // Google OAuth
 app.use(session({
@@ -65,6 +67,7 @@ app.use('/', paymentRoute)
 app.use('/api/v1/dashboard', dashboardRoute)
 app.use('/api/v1/role', roleRoute)
 app.use('/api/v1/contact', contactRoute)
+app.use('/api/v1/hotel', hotelRoute)
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);

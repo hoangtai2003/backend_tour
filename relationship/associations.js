@@ -12,6 +12,7 @@ import Review from "../models/Review.js";
 import Roles from "../models/Roles.js";
 import Permissions from "../models/Permissions.js";
 import RolePermissions from "../models/RolePermissions.js";
+import Hotel from "../models/Hotel.js";
 
 
 // Relationship one to many between Tour and TourChild
@@ -60,3 +61,7 @@ RolePermissions.belongsTo(Permissions, { foreignKey: 'permission_id', as: 'permi
 
 Roles.hasMany(User, { foreignKey: 'role_id', as: 'roleUser'})
 User.belongsTo(Roles, { foreignKey: 'role_id', as: 'userRole'})
+
+// Relationship hotel, location
+Location.hasMany(Hotel, {foreignKey: 'location_id', as: 'locationHotel'})
+Hotel.belongsTo(Location, {foreignKey: 'location_id', as: 'hotelLocation'})
