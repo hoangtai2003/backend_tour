@@ -1,4 +1,3 @@
-import express from "express";
 import Hotel from "../models/Hotel.js"
 import Location from "../models/Location.js";
 import { createSlug } from "../utils/slug.js";
@@ -27,12 +26,12 @@ export const createHotel = async(req, res) => {
 }
 
 export const updateHotel = async(req, res) => {
-    const { id } = req.params
+    const { slug } = req.params
     const { location_id, hotel_name, hotel_description, hotel_address, hotel_phone, hotel_price, hotel_title } = req.body
     const hotel_image = req.files
     const hotel_slug = createSlug(hotel_name)
     try {
-        const hotelToUpdate = await Hotel.findByPk(id)
+        const hotelToUpdate = await Hotel.findOne({where: { hotel_slug: slug }})
         if(!hotelToUpdate){
             return res.status(404).json({ success: false, message: 'Hotel not found' });
         }
@@ -144,5 +143,14 @@ export const getHotelRelated = async(req, res) => {
             message: 'Đã có lỗi xảy ra. Vui lòng thử lại!',
             error: error.message
         });
+    }
+}
+export const destroyHotel = async(req, res) => {
+    const { slug } = req.params
+    try {
+        await Hotel.destroy({where: { hotel_slug: slug } })
+        res.status(200).json({success:true, message:'Xóa tin tức thành công'})
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Đã có lỗi xảy ra !' });
     }
 }

@@ -1,5 +1,5 @@
 import express from "express";
-import { createHotel, getAllHotel, getHotelRelated, getSingleHotel, updateHotel } from "../controllers/HotelController.js";
+import { createHotel, destroyHotel, getAllHotel, getHotelRelated, getSingleHotel, updateHotel } from "../controllers/HotelController.js";
 import multer from 'multer'
 
 const router = express.Router()
@@ -26,12 +26,14 @@ router.post('/upload', upload.single('upload'), (req, res) => {
 });
 router.post('/', upload.array('hotel_image', 10), createHotel)
 
-router.put('/:id', upload.array('hotel_image', 10), updateHotel)
+router.put('/:slug', upload.array('hotel_image', 10), updateHotel)
 
 router.get('/', getAllHotel)
 
 router.get('/:slug', getSingleHotel)
 
 router.get('/related/:slug', getHotelRelated)
+
+router.delete('/:slug', destroyHotel)
 
 export default router
