@@ -44,13 +44,15 @@ Passenger.belongsTo(Booking, {foreignKey: 'booking_id', as: 'passengerBooking'})
 Category.hasMany(News, {foreignKey: 'cate_id', as: 'cateNews'})
 News.belongsTo(Category, {foreignKey: 'cate_id', as: 'newsCate'})
 
-// Relationship review user and tour
+// Relationship review user and tour, booking
 User.hasMany(Review, {foreignKey: 'user_id', as: 'userReviews'})
 Review.belongsTo(User, {foreignKey: 'user_id', as: 'reviewsUser'})
 
 Tour.hasMany(Review, {foreignKey: 'tour_id', as: 'tourReviews'})
 Review.belongsTo(Tour, {foreignKey: 'tour_id', as: 'reviewsTour'})
 
+Booking.hasOne(Review, { foreignKey: 'booking_id', as: 'bookingReview' });
+Review.belongsTo(Booking, { foreignKey: 'booking_id', as: 'reviewBooking' });
 
 // Relationship role, permissions, role_permissions, users
 Roles.belongsToMany(Permissions, { through: RolePermissions, foreignKey: 'role_id', as: 'rolePermission'})

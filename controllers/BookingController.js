@@ -6,6 +6,7 @@ import nodemailer from 'nodemailer'
 import TourImage from "../models/TourImage.js";
 import { createVNPayPaymentUrl } from "./PaymentController.js";
 import { generateBookingCode } from "../utils/generateCode.js";
+import Reviews from "../models/Review.js";
 export const createBooking = async (req, res) => {
     const {
         tour_child_id,
@@ -436,6 +437,11 @@ export const getBooking = async(req, res) => {
                     model: Passenger,
                     as: 'bookingPassenger',
                     attributes: ['booking_id', 'passenger_name', 'passenger_dateOfBirthday', 'passenger_gender']
+                },
+                {
+                    model: Reviews,
+                    as: 'bookingReview',
+                    attributes: ['review_status']
                 }
             ]
         });

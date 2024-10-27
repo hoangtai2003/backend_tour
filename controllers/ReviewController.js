@@ -1,12 +1,14 @@
 import Tour from "../models/Tour.js"
 import Review from "../models/Review.js"
 import User from "../models/User.js"
+import Booking from "../models/Booking.js";
 
 export const createReview = async (req, res) => {
-    const { user_id, tour_id, review_comment, review_rating } = req.body;
+    const { user_id, tour_id, review_comment, review_rating, booking_id } = req.body;
     try {
         const tour = await Tour.findByPk(tour_id);
         const user = await User.findByPk(user_id);
+        const booking = await Booking.findByPk(booking_id)
         if (!tour || !user) {
             return res.status(404).json({
                 success: false,
@@ -14,19 +16,20 @@ export const createReview = async (req, res) => {
             });
         }
         const existingReview = await Review.findOne({
-            where: { user_id, tour_id }
+            where: { user_id, tour_id, booking_id }
         });
         if (existingReview) {
             return res.status(400).json({
                 success: false,
-                message: 'Bạn đã đánh giá tour này rồi'
+               message: 'Bạn đã đánh giá tour này rồi cho lần đặt chỗ này.'
             });
         }
         const newReview = await Review.create({
             user_id,
             tour_id,
             review_comment,
-            review_rating
+            review_rating,
+            booking_id
         });
 
         res.status(200).json({

@@ -2,6 +2,7 @@ import { DataTypes } from "sequelize";
 import sequelize from "../sequelize.js";
 import Tour from "./Tour.js";
 import User from "./User.js";
+import Booking from "./Booking.js";
 const Reviews = sequelize.define("Reviews",{
     id: {
         type: DataTypes.INTEGER,
@@ -24,6 +25,16 @@ const Reviews = sequelize.define("Reviews",{
         allowNull: false,
         references: {
             model: User,
+            key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+    },
+    booking_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: Booking,
             key: 'id'
         },
         onUpdate: 'CASCADE',
