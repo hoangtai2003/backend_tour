@@ -372,7 +372,7 @@ export const getAllBooking = async(req, res) => {
                 {
                     model: TourChild,
                     as: 'bookingTourChild',
-                    attributes: ['tour_id', 'tour_code', 'price_adult', 'price_child', 'price_toddler', 'price_baby'],
+                    attributes: ['tour_id', 'tour_code', 'price_adult', 'price_child', 'price_toddler', 'price_baby', 'price_sale'],
                     include: [
                         {
                             model: Tour,

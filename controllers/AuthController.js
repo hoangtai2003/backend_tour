@@ -5,7 +5,6 @@ import validator from "validator";
 import passport from "passport";
 import GoogleStrategy from 'passport-google-oauth20'
 import Roles from "../models/Roles.js";
-import RolePermissions from "../models/RolePermissions.js";
 import Permissions from "../models/Permissions.js";
 export const login = async (req, res) => {
     const { email, password } = req.body;
@@ -34,7 +33,7 @@ export const login = async (req, res) => {
     }
 }
 export const register = async (req, res) => {
-    const {username, email, password, phone, address, confirmPassword, role} = req.body
+    const {username, email, password, phone, address, confirmPassword, role_id} = req.body
     try {
         const emailExist = await User.findOne({ where: {email} })
         if (!username || !email || !password || !phone || !address || !confirmPassword) {
@@ -58,7 +57,7 @@ export const register = async (req, res) => {
             phone: phone,
             address: address,
             password: hash,
-            role
+            role_id
         })
         await newUser.save()
         res.status(200).json({success:true, message:'Đăng ký thành công'})
