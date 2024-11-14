@@ -42,7 +42,9 @@ export const register = async (req, res) => {
         if (password != confirmPassword){
             return res.json({success:false, message:'Mật khẩu và xác nhận mật khẩu không chính xác'})
         }
-
+        if (password.length < 8) {
+            return res.json({success:false, message:'Vui lòng nhập mật khẩu đủ 8 ký tự chữ hoặc số'})
+        }
         if (emailExist){
             return res.json({success:false, message:'Email đã tồn tại trong hệ thống'})
         }
@@ -119,7 +121,7 @@ async (accessToken, refreshToken, profile, done) =>
                 username: profile.displayName,
                 email: profile.emails[0].value,
                 googleId: profile.id,
-                role: 2,
+                role_id: 2,
                 password: null
             });
             return done(null, newUser)
