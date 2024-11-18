@@ -1,6 +1,7 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../sequelize.js';
 import Roles from './Roles.js';
+import Location from './Location.js';
 
 const User = sequelize.define('User', {
     id: {
@@ -18,6 +19,16 @@ const User = sequelize.define('User', {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
     },
+    location_id: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: Location,
+            key: "id"
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+    },
+
     username: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -30,7 +41,7 @@ const User = sequelize.define('User', {
     },
     password: {
         type: DataTypes.STRING,
-        allowNull: false, 
+        // allowNull: false, 
     },
     phone: {
         type: DataTypes.STRING,
@@ -48,6 +59,15 @@ const User = sequelize.define('User', {
     },
     dateBirthday: {
         type: DataTypes.DATE,
+    },
+    user_profile: {
+        type: DataTypes.STRING
+    },
+    user_experience: {
+        type: DataTypes.INTEGER
+    },
+    user_image: {
+        type: DataTypes.STRING
     }
 }, {
     timestamps: true,

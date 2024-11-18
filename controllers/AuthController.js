@@ -6,6 +6,12 @@ import passport from "passport";
 import GoogleStrategy from 'passport-google-oauth20'
 import Roles from "../models/Roles.js";
 import Permissions from "../models/Permissions.js";
+import Location from "../models/Location.js";
+import Tour from "../models/Tour.js";
+import TourChild from "../models/TourChild.js";
+import moment from 'moment';
+import { Op } from "sequelize";
+import TourImage from "../models/TourImage.js";
 export const login = async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -33,17 +39,20 @@ export const login = async (req, res) => {
     }
 }
 export const register = async (req, res) => {
-    const {username, email, password, phone, address, confirmPassword, role_id} = req.body
+    const {username, email, password, phone, address, confirmPassword, role_id, location_id, status} = req.body
     try {
         const emailExist = await User.findOne({ where: {email} })
-        if (!username || !email || !password || !phone || !address || !confirmPassword) {
+        if (!username || !email || !phone) {
             return res.status(400).json({ success: false, message: 'Vui lòng nhập đầy đủ thông tin' });
         }
-        if (password != confirmPassword){
-            return res.json({success:false, message:'Mật khẩu và xác nhận mật khẩu không chính xác'})
-        }
-        if (password.length < 8) {
-            return res.json({success:false, message:'Vui lòng nhập mật khẩu đủ 8 ký tự chữ hoặc số'})
+        if (password && confirmPassword) {
+            if (password !== confirmPassword) {
+                return res.status(400).json({ success: false, message: 'Mật khẩu và xác nhận mật khẩu không chính xác' });
+            }
+
+            if (password.length < 8) {
+                return res.status(400).json({ success: false, message: 'Vui lòng nhập mật khẩu đủ 8 ký tự chữ hoặc số' });
+            }
         }
         if (emailExist){
             return res.json({success:false, message:'Email đã tồn tại trong hệ thống'})
@@ -51,20 +60,26 @@ export const register = async (req, res) => {
         if (!validator.isEmail(email)){
             return res.json({success:false, message:'Email không hợp lệ'})
         }
-        const salt = bcrypt.genSaltSync(10)
-        const hash = bcrypt.hashSync(password, salt)
+        let hash = '';
+        if (password) {
+            const salt = bcrypt.genSaltSync(10);
+            hash = bcrypt.hashSync(password, salt);
+        }
         const newUser = await User.create({
             username: username,
             email: email,
             phone: phone,
             address: address,
             password: hash,
-            role_id
+            role_id,
+            location_id,
+            status
         })
         await newUser.save()
         res.status(200).json({success:true, message:'Đăng ký thành công'})
     } catch (error) {
-        res.status(500).json({success:false, message:'Đăng ký không thành công. Vui lòng thử lại'})
+        console.log(error)
+        res.status(500).json({success:false, error, message:'Đăng ký không thành công. Vui lòng thử lại'})
     }
 }
 
@@ -73,8 +88,10 @@ const createToken = (id) => {
 }
 export const user = async (req, res) => {
     const id  = req.user.id
+    const currentDate = moment().format('YYYY-MM-DD'); 
     try {
         const user = await User.findByPk(id, {
+            attributes: ['username', 'email', 'id', 'phone', 'address', 'dateBirthday'],
             include: [
                 {
                     model: Roles,
@@ -88,8 +105,39 @@ export const user = async (req, res) => {
                             attributes: ['name', 'slug']
                         }
                     ]
-                }
-            ]
+                },
+                {
+                    model: Location,
+                    as: 'userLocation',
+                    attributes: ['name'],
+                    include: [
+                        {
+                            model: Tour,
+                            as: 'tours',
+                            attributes: ['name', 'duration'],
+                            through: {attributes: [] },
+                            include: [
+                                {
+                                    model: TourChild,
+                                    as: 'tourChildren',
+                                    attributes: ['tour_code', 'status_guide','start_date', 'id'],
+                                    where: {
+                                        start_date: {
+                                            [Op.gt]: currentDate
+                                        }
+                                    } 
+                                },
+                                {
+                                    model: TourImage,
+                                    as: 'tourImage',
+                                    attributes: ['image_url']
+                                }
+                            ]
+
+                        }
+                    ]
+                },
+            ],
         }); 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });

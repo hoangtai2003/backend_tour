@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import crypto from "crypto"
 export const generateTourCode = (startDate) => {
     const tourCodePrefix = "NDSGN";
     const uniqueId = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
@@ -24,3 +25,7 @@ export const generateBookingCode = () => {
 
     return bookingCode;
 };
+
+export const generateRandomPassword  = () => {
+    return crypto.randomBytes(4).toString('hex');
+}

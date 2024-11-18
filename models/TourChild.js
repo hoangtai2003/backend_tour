@@ -75,6 +75,10 @@ const TourChild = sequelize.define('TourChild', {
     total_seats: {
         type: DataTypes.INTEGER,
         allowNull: false
+    },
+    status_guide: {
+        type: DataTypes.ENUM("Đã có hướng dẫn viên", "Chưa có hướng dẫn viên"),
+        defaultValue: "Chưa có hướng dẫn viên"
     }
 }, {
     timestamps: true,
