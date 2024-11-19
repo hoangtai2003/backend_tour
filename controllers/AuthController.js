@@ -39,7 +39,7 @@ export const login = async (req, res) => {
     }
 }
 export const register = async (req, res) => {
-    const {username, email, password, phone, address, confirmPassword, role_id, location_id, status} = req.body
+    const {username, email, password, phone, address, confirmPassword, role_id, location_id, status, dateBirthday, gender, user_experience} = req.body
     try {
         const emailExist = await User.findOne({ where: {email} })
         if (!username || !email || !phone) {
@@ -65,6 +65,10 @@ export const register = async (req, res) => {
             const salt = bcrypt.genSaltSync(10);
             hash = bcrypt.hashSync(password, salt);
         }
+        let user_profile = null
+        if (req.file){
+            user_profile = req.file.path
+        }
         const newUser = await User.create({
             username: username,
             email: email,
@@ -73,7 +77,12 @@ export const register = async (req, res) => {
             password: hash,
             role_id,
             location_id,
-            status
+            status,
+            user_experience,
+            dateBirthday,
+            gender,
+            user_profile
+
         })
         await newUser.save()
         res.status(200).json({success:true, message:'Đăng ký thành công'})
