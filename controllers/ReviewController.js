@@ -63,7 +63,7 @@ export const getReviewBySlugTour = async(req, res) => {
                         {
                             model: User,
                             as: 'reviewsUser',
-                            attributes: ['username']
+                            attributes: ['username', 'user_image']
                         }
                     ]
                 }
@@ -83,7 +83,7 @@ export const getAllReview = async (req, res) => {
                 {
                     model: User,
                     as: 'reviewsUser',
-                    attributes: ['username', 'email']
+                    attributes: ['username', 'email', 'user_image']
                 }
             ]
         })

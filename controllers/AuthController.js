@@ -100,7 +100,7 @@ export const user = async (req, res) => {
     const currentDate = moment().format('YYYY-MM-DD'); 
     try {
         const user = await User.findByPk(id, {
-            attributes: ['username', 'email', 'id', 'phone', 'address', 'dateBirthday'],
+            attributes: ['username', 'email', 'id', 'phone', 'address', 'dateBirthday', 'user_experience', 'gender', 'user_image'],
             include: [
                 {
                     model: Roles,
@@ -132,7 +132,7 @@ export const user = async (req, res) => {
                                     attributes: ['tour_code', 'status_guide','start_date', 'id'],
                                     where: {
                                         start_date: {
-                                            [Op.gt]: currentDate
+                                            [Op.gte]: currentDate
                                         }
                                     } 
                                 },

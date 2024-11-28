@@ -40,10 +40,12 @@ sequelize.authenticate()
 app.use(express.json()) 
 app.use(cors(corsOption)) 
 app.use(cookieParser()) 
+
 app.use('/images/tours', express.static('images/tours'));
 app.use('/images/locations', express.static('images/locations'))
 app.use('/images/news', express.static('images/news'))
 app.use('/images/hotel', express.static('images/hotel'))
+app.use('/images/users', express.static('images/users'))
 
 // Google OAuth
 app.use(session({
