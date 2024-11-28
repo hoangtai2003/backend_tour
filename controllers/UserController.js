@@ -32,14 +32,30 @@ export const createUser = async (req, res) => {
 // update user 
 export const updateUser = async (req, res) => {
     const id = req.params.id;
-    const { username, email, phone, status, role_id, dateBirthday, gender, address } = req.body;
-
+    const { username, email, phone, status, role_id, dateBirthday, gender, address, user_experience, currentPassword, newPassword } = req.body;
+    const user_image = req.files
     try {
         const userToUpdate = await User.findByPk(id);
         if (!userToUpdate) {
-            return res.status(404).json({ success: false, message: 'User not found' });
+            return res.status(404).json({ success: false, message: 'Người dùng không tồn tại !' });
         }
-        await userToUpdate.update({
+        if (currentPassword && newPassword) {
+            if (!userToUpdate.password) {
+                return res.status(400).json({ success: false, message: 'Không tìm thấy mật khẩu hiện tại trong hệ thống.' });
+            }
+
+            const isMatch = await bcrypt.compare(currentPassword, userToUpdate.password);
+            if (!isMatch) {
+                return res.status(400).json({ success: false, message: 'Mật khẩu cũ không chính xác. Vui lòng thử lại.' });
+            }
+
+            // Hash mật khẩu mới và cập nhật
+            const salt = bcrypt.genSaltSync(10);
+            const hash = bcrypt.hashSync(newPassword, salt);
+            userToUpdate.password = hash;
+        }
+
+        const updateData = {
             username,
             email,
             phone,
@@ -48,8 +64,13 @@ export const updateUser = async (req, res) => {
             dateBirthday,
             gender,
             address,
-        });
-
+            user_experience
+        }
+        if (user_image && user_image.length > 0){
+            updateData.user_image = `http://localhost:4000/images/users/${user_image[0].filename}`
+        }
+        await userToUpdate.update(updateData);
+        await userToUpdate.save();
         res.status(200).json({ success: true, message: 'Thông tin cập nhật thành công', data: userToUpdate });
     } catch (err) {
         console.error(err);
