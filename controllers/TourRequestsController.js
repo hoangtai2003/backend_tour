@@ -29,8 +29,15 @@ export const updateTourRequest = async(req, res) => {
         }
         await request.update({ status });
 
-        const tour = await TourChild.findByPk(request.tour_child_id)
-        await tour.update({ guideId: request.guideId, status_guide: "Đã có hướng dẫn viên" });
+        if (status === "Phê duyệt") {
+            const tour = await TourChild.findByPk(request.tour_child_id);
+            if (tour) {
+                await tour.update({ 
+                    guideId: request.guideId, 
+                    status_guide: "Đã có hướng dẫn viên" 
+                });
+            }
+        }
         res.status(200).json({ success: true, message: 'Yêu cầu đăng ký đã được chấp nhận.' });
         
     } catch (error) {

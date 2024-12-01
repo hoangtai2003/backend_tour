@@ -16,18 +16,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-router.post('/upload', upload.single('upload'), (req, res) => {
-    const file = req.file;
-    if (!file) {
-        return res.status(400).json({ message: 'No file uploaded' });
-    }
-    const imageUrl = `http://localhost:4000/images/users/${file.filename}`;
-    res.status(200).json({
-        uploaded: true,
-        url: imageUrl
-    });
-});
-
 // create new user
 router.post('/',  createUser)
 
