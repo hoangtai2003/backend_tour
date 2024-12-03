@@ -86,6 +86,7 @@ export const createBooking = async (req, res) => {
             await Promise.all(bookingPassengerPromises)
         }
         if (payment_method === 'vnpay'){
+            await sendEmailHandleBooking(bookingDetails.email, bookingDetails.status, bookingDetails)
             const vnpUrl = createVNPayPaymentUrl(newBooking.booking_code, total_price, req)
             return res.status(200).json({ success: true, url: vnpUrl});
         } else {
@@ -411,6 +412,7 @@ export const getBooking = async(req, res) => {
     try {
         const booking = await Booking.findAll({
             where: { user_id: userId },
+            order: [['id', 'DESC']], 
             include: [
                 {
                     model: TourChild,
