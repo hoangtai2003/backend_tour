@@ -739,9 +739,6 @@ export const getFilterSortPrice = async (req, res) => {
             case "giatuthapdencao":
                 orderCondition.push(['price', 'ASC']); 
                 break;
-            case "giatuthapdencao":
-                orderCondition.push([{ model: TourChild, as: 'tourChildren' }, 'start_date', 'DESC']); 
-                break;
             default:
                 return res.status(400).json({
                     success: false,
