@@ -92,7 +92,25 @@ export const getAllReview = async (req, res) => {
         res.status(500).json({success: false, message:"Có lỗi xảy ra. Vui lòng thử lại!"})
     }
 }
-
+export const getAllReviewStatus = async (req, res) => {
+    try {
+        const review = await Review.findAll({
+            where: {
+                status: "Hiển thị"
+            },
+            include: [
+                {
+                    model: User,
+                    as: 'reviewsUser',
+                    attributes: ['username', 'email', 'user_image'],
+                }
+            ]
+        })
+        res.status(200).json({success: true, message:"", data: review})
+    } catch (error) {
+        res.status(500).json({success: false, message:"Có lỗi xảy ra. Vui lòng thử lại!"})
+    }
+}
 export const editStatus = async(req, res) => {
     const { id } = req.params
     const { status } = req.body
