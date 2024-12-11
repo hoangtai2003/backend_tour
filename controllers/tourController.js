@@ -241,36 +241,64 @@ export const updateTour = async (req, res) => {
     }
 };
 
-// delete tour
 export const deleteTour = async (req, res) => {
-    const id = req.params.id;
+    const { id } = req.params;
     try {
         const tourToDelete = await Tour.findByPk(id);
         if (!tourToDelete) {
-            return res.status(404).json({ success: false, message: 'Tour not found' });
+            return res.status(404).json({ success: false, message: 'Tour không được tìm thấy' });
         }
 
-        // Delete related TourChild records
+        const relatedBookings = await Booking.findOne({
+            where: {
+                tour_child_id: {
+                    [Op.in]: Sequelize.literal(
+                        `(Select id from tour_child where tour_id = ${id})`
+                    )
+                },
+                status: "Đã thanh toán"
+            },
+        });
+
+        if (relatedBookings) {
+            return res.status(400).json({
+                success: false,
+                message: 'Không thể xóa vì tour đã có khách đặt!',
+            });
+        }
+        const currentDate = new Date()
+        const ongoingTourChild = await TourChild.findAll({
+            where: {
+                tour_id: id,
+                start_date: { [Op.lte]: currentDate },
+                end_date: { [Op.gte]: currentDate }
+            }
+        })
+
+        if (ongoingTourChild) {
+            return res.status(400).json({
+                success: false,
+                message: 'Không thể xóa vì tour đang diễn ra!'
+            });
+        }
+
         await TourChild.destroy({ where: { tour_id: id } });
 
-        // Delete related TourLocation records
         await TourLocation.destroy({ where: { tour_id: id } });
 
-        // Finally, delete the Tour record
         await tourToDelete.destroy();
 
-        res.status(200).json({ success: true, message: 'Tour successfully deleted' });
+        res.status(200).json({ success: true, message: 'Xóa tour thành công' });
     } catch (err) {
-        console.error('Error deleting tour:', err);
         res.status(500).json({ 
             success: false, 
-            message: 'Failed to delete tour. Try again', 
+            message: 'Không thể xóa tour, vui lòng thử lại.', 
             error: err.message 
         });
     }
 };
 
-// get single tour
+
 export const getSingleTour = async (req, res) => {
     const { id } = req.params
     try {
@@ -394,7 +422,6 @@ export const getTourBySlug = async (req, res) => {
         res.status(500).json({success:false, message:'Not Found'})
     }
 }
-// get all tour
 
 export const getAllTour = async (req, res) => {
     // pagination
