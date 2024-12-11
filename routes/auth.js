@@ -1,11 +1,12 @@
 import express from 'express'
-import { login, register, user } from '../controllers/AuthController.js';
+import { login, registerClient, registerGuide, user } from '../controllers/AuthController.js';
 import { verifyToken } from '../utils/verifyToken.js';
 import passport from 'passport';
 import upload from '../utils/upload.js';
 const router = express.Router()
 
-router.post('/register', upload.single("user_profile"), register)
+router.post('/registerGuide', upload.single("user_profile"), registerGuide)
+router.post('/registerClient', registerClient)
 router.post('/login', login)
 router.get('/users', verifyToken, user)
 

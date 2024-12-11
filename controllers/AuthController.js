@@ -38,7 +38,7 @@ export const login = async (req, res) => {
         return res.status(500).json({success:false, message:'Đăng nhập thất bại. Vui lòng thử lại!'})
     }
 }
-export const register = async (req, res) => {
+export const registerGuide = async (req, res) => {
     const {username, email, password, phone, address, confirmPassword, role_id, location_id, status, dateBirthday, gender, user_experience} = req.body
     try {
         const emailExist = await User.findOne({ where: {email} })
@@ -91,7 +91,49 @@ export const register = async (req, res) => {
         res.status(500).json({success:false, error, message:'Đăng ký không thành công. Vui lòng thử lại'})
     }
 }
+export const registerClient = async(req, res) => {
+    const {username, email, password, phone, address, confirmPassword, role_id, location_id} = req.body
+    try {
+        const emailExist = await User.findOne({ where: {email} })
+        if (!username || !email || !phone) {
+            return res.status(400).json({ success: false, message: 'Vui lòng nhập đầy đủ thông tin' });
+        }
+        if (password && confirmPassword) {
+            if (password !== confirmPassword) {
+                return res.status(400).json({ success: false, message: 'Mật khẩu và xác nhận mật khẩu không chính xác' });
+            }
 
+            if (password.length < 8) {
+                return res.status(400).json({ success: false, message: 'Vui lòng nhập mật khẩu đủ 8 ký tự chữ hoặc số' });
+            }
+        }
+        if (emailExist){
+            return res.json({success:false, message:'Email đã tồn tại trong hệ thống'})
+        }
+        if (!validator.isEmail(email)){
+            return res.json({success:false, message:'Email không hợp lệ'})
+        }
+        let hash = '';
+        if (password) {
+            const salt = bcrypt.genSaltSync(10);
+            hash = bcrypt.hashSync(password, salt);
+        }
+        const newUser = await User.create({
+            username: username,
+            email: email,
+            phone: phone,
+            address: address,
+            password: hash,
+            role_id,
+            location_id
+        })
+        await newUser.save()
+        res.status(200).json({success:true, message:'Đăng ký thành công'})
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({success:false, error, message:'Đăng ký không thành công. Vui lòng thử lại'})
+    }
+}
 const createToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET_KEY, {expiresIn: "1d"})
 }
