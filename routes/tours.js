@@ -1,5 +1,5 @@
 import express from 'express'
-import { createTour, updateTour, deleteTour, getSingleTour, getAllTour, getRelatedTours, getTourByTourCode, getCountTourRelated, getCountToursByLocation, getTourFilterPrice, getFilterSortPrice, getFilterTour, getSearchTour, getTourByNameLocation, getTourBySlug, getTourChildBySale, getDetailTourByTourCode }  from '../controllers/TourController.js'
+import { createTour, updateTour, deleteTour, getSingleTour, getAllTour, getRelatedTours, getTourByTourCode, getCountTourRelated, getCountToursByLocation, getTourFilterPrice, getFilterSortPrice, getFilterTour, getSearchTour, getTourByNameLocation, getTourBySlug, getTourChildBySale, getDetailTourByTourCode }  from '../controllers/tourController.js'
 import multer from 'multer'
 
 
